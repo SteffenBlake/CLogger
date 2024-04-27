@@ -20,37 +20,46 @@ var process = new System.Diagnostics.Process();
 process.StartInfo.FileName = "dotnet";
 
 List<string> dotnetTestArgs = [
-    "test", 
-    /* "--test-adapter-path", adapterPath, */
+    "test",
     "--logger", $"clogger;pipe={pipeName}",
+    /* "--list-tests", */
     testPath,
 ];
 
 process.StartInfo.Arguments = string.Join(" ", dotnetTestArgs);
 
-Console.WriteLine("Invoking:");
-Console.WriteLine(process.StartInfo.FileName + " " + process.StartInfo.Arguments);
+process.StartInfo.RedirectStandardOutput = false;
+process.StartInfo.RedirectStandardError = false;
+process.StartInfo.RedirectStandardInput = false;
+process.StartInfo.UseShellExecute = true;
 
 process.StartInfo.CreateNoWindow = true;
-process.StartInfo.UseShellExecute = true;
-process.OutputDataReceived += (_, e) => Console.WriteLine(e.Data);
-process.ErrorDataReceived += (_, e) => Console.Error.WriteLine(e.Data);
+process.OutputDataReceived += (_, e) => 
+{
+    if (e.Data == null || !e.Data.StartsWith("Process Id:"))
+    {
+        return;
+    }
+    var procIdRaw = e.Data.Split(" ")[2];
+    Console.WriteLine($"PROCESS ID: {procIdRaw}");
+};
+
+process.StartInfo.EnvironmentVariables["VSTEST_HOST_DEBUG"] = "1";
 
 process.Start();
 
-var pipeClient = new NamedPipeClientStream(
-    serverName: ".",
+var pipeServer = new NamedPipeServerStream(
     pipeName: pipeName,
     PipeDirection.InOut
 );
 
-await pipeClient.ConnectAsync();
+await pipeServer.WaitForConnectionAsync();
 
-using var reader = new StreamReader(pipeClient);
+using var reader = new StreamReader(pipeServer);
 
 while (!reader.EndOfStream)
 {
-    Console.Write(await reader.ReadLineAsync());
+    Console.WriteLine(await reader.ReadLineAsync());
 }
 
 Console.WriteLine("Stream Ended");
