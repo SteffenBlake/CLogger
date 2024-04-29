@@ -1,70 +1,135 @@
-﻿using System.IO.Pipes;
+﻿using System.Diagnostics;
+using System.IO.Pipes;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using CLogger.Common;
+using CLogger.Common.Messages;
+using CLogger.Tui.Models;
+using CommandLine;
+using MessagePack;
 
-var rootPath = Path.GetFullPath(Path.Join(
-    Directory.GetCurrentDirectory(),
-    "../../../../"
-));
-
-var adapterPath = Path.Join(
-    rootPath,
-    "CLogger.TestAdapter/bin/Debug/net8.0"
-);
-var testPath = Path.Join(
-    rootPath,
-    "CLogger.UnitTests/CLogger.UnitTests.csproj"
-);
-
-var pipeName = Guid.NewGuid().ToString().Replace("-", "");
-
-var process = new System.Diagnostics.Process();
-process.StartInfo.FileName = "dotnet";
-
-List<string> dotnetTestArgs = [
-    "test",
-    "--logger", $"clogger;pipe={pipeName}",
-    /* "--list-tests", */
-    testPath,
-];
-
-process.StartInfo.Arguments = string.Join(" ", dotnetTestArgs);
-
-process.StartInfo.RedirectStandardOutput = false;
-process.StartInfo.RedirectStandardError = false;
-process.StartInfo.RedirectStandardInput = false;
-process.StartInfo.UseShellExecute = true;
-
-process.StartInfo.CreateNoWindow = true;
-process.OutputDataReceived += (_, e) => 
+try 
 {
-    if (e.Data == null || !e.Data.StartsWith("Process Id:"))
+    var parser = new Parser(options =>
     {
-        return;
-    }
-    var procIdRaw = e.Data.Split(" ")[2];
-    Console.WriteLine($"PROCESS ID: {procIdRaw}");
-};
+        options.AutoHelp = true;
+        options.CaseSensitive = false;
+        options.IgnoreUnknownArguments = false;
+        options.CaseInsensitiveEnumValues = true;
+        options.HelpWriter = Console.Out;
+    });
+    
+    _ = await parser.ParseArguments<CliOptions>(args)
+        .WithNotParsed(errors => {
+            foreach(var error in errors)
+            {
+                Console.Error.WriteLine(error);
+            }
+        }).WithParsedAsync(Run);
+}
+// Don't log Operation Cancel Exceptions as its intended to happen
+catch (OperationCanceledException) {}
 
-process.StartInfo.EnvironmentVariables["VSTEST_HOST_DEBUG"] = "1";
-
-process.Start();
-
-var pipeServer = new NamedPipeServerStream(
-    pipeName: pipeName,
-    PipeDirection.InOut
-);
-
-await pipeServer.WaitForConnectionAsync();
-
-using var reader = new StreamReader(pipeServer);
-
-while (!reader.EndOfStream)
+static async Task Run(CliOptions options)
 {
-    Console.WriteLine(await reader.ReadLineAsync());
+    /* if (options.Debug) */
+    /* { */
+    /*     Console.WriteLine( */
+    /*         $"Waiting for debugger to attach, ProcessId: {Environment.ProcessId}" */
+    /*     ); */
+    /* } */
+    /* while (options.Debug && !Debugger.IsAttached) */
+    /* { */
+    /*     await Task.Delay(1000); */
+    /* } */
+
+    var modelState = new Model();
+    var cancelled = new CancellationTokenSource();
+    var pipeName = Guid.NewGuid().ToString().Replace("-", "");
+   
+    await Task.WhenAll(
+        RunTests(options, modelState, cancelled),
+        HandleInput(modelState, cancelled.Token)
+    );
 }
 
-Console.WriteLine("Stream Ended");
+static async Task RunTests(
+    CliOptions options,
+    Model modelState, 
+    CancellationTokenSource cancellationTokenSource
+)
+{
+    var process = new System.Diagnostics.Process();
+    process.StartInfo.FileName = "dotnet";
+    
+    List<string> dotnetTestArgs = [
+        "test",
+        "--logger", $"clogger;pipe={modelState.PipeName}",
+        /* "--list-tests", */
+    ];
+    if (options.Path != ".")
+    {
+        dotnetTestArgs.Add(Path.GetFullPath(options.Path));
+    }
+    
+    process.StartInfo.Arguments = string.Join(" ", dotnetTestArgs);
+    
+    process.StartInfo.RedirectStandardOutput = true;
+    process.StartInfo.RedirectStandardError = true;
+    process.EnableRaisingEvents = true;
+    
+    process.StartInfo.CreateNoWindow = true;
+    process.OutputDataReceived += (_, e) => 
+    {
+        if (e.Data == null || !e.Data.StartsWith("Process Id:"))
+        {
+            return;
+        }
+        var procIdRaw = e.Data.Split(" ")[2][0..^1];
+        Console.WriteLine($"PROCESS ID: {procIdRaw}");
+    };
+   
+    if (options.Debug)
+    {
+        process.StartInfo.EnvironmentVariables["VSTEST_HOST_DEBUG"] = "1";
+    }
+   
+    process.ErrorDataReceived += (_, _) => cancellationTokenSource.Cancel();
+    process.Exited += (_, _) => cancellationTokenSource.Cancel();
 
-process.WaitForExit();
+    process.Start();
+    process.BeginOutputReadLine();
+    process.BeginErrorReadLine();
 
-Console.WriteLine();
-Console.WriteLine("Process ended");
+    await process.WaitForExitAsync();
+}
+
+
+static async Task HandleInput(
+    Model modelState, 
+    CancellationToken cancellationToken
+)
+{
+    var pipeServer = new NamedPipeServerStream(
+        pipeName: modelState.PipeName,
+        PipeDirection.InOut
+    );
+    
+    await pipeServer.WaitForConnectionAsync(cancellationToken);
+
+    using var reader = new StreamReader(pipeServer);
+
+    while (
+        !cancellationToken.IsCancellationRequested &&
+        modelState.Running &&
+        !reader.EndOfStream
+    )
+    {
+        var next = await reader.ReadLineAsync(cancellationToken)
+            ?? throw new InvalidOperationException();
+        var msg = JsonSerializer.Deserialize<MessageBase>(next)
+            ?? throw new InvalidOperationException();
+        var output = await msg.Invoke(modelState);
+        Console.WriteLine(output);
+    }
+}

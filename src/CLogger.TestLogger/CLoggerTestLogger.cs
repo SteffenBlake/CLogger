@@ -1,8 +1,8 @@
-﻿using System.Collections;
-using System.IO.Pipes;
+﻿using System.IO.Pipes;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
+using CLogger.Common.Messages;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.Client;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.Logging;
@@ -22,36 +22,10 @@ public class CLoggerTestLogger : ITestLoggerWithParameters
     private NamedPipeClientStream? _client;
     private StreamWriter? _writer;
 
-    private static readonly List<Type> IgnoreList = [ 
-        typeof(IEnumerable<TestProperty>) 
-    ];
-    private static readonly JsonSerializerOptions jsonOptions = new()
-    {
-        WriteIndented = true,
-        TypeInfoResolver = new DefaultJsonTypeInfoResolver()
-            .WithAddedModifier(t => 
-            {
-                if (t.Kind != JsonTypeInfoKind.Object)
-                {
-                    return;
-                }
-                var toRemove = t.Properties
-                    .Where(p => IgnoreList.Contains(p.PropertyType))
-                    .ToList();
-
-                foreach(var removal in toRemove)
-                {
-                    t.Properties.Remove(removal);
-                }
-            })
-    };
-
     public void Initialize(
         TestLoggerEvents events, Dictionary<string, string?> parameters
     )
     {
-        jsonOptions.Converters.Add(new JsonStringEnumConverter());
-
         if (
             !parameters.TryGetValue("pipe", out var pipe) || 
             string.IsNullOrEmpty(pipe)
@@ -72,7 +46,6 @@ public class CLoggerTestLogger : ITestLoggerWithParameters
             AutoFlush = true
         };
 
-        _writer.WriteLine("Logger: Initializing...");
         events.TestRunStart += OnTestStart;
         events.TestRunComplete += OnTestRunComplete;
         events.TestResult += OnTestResult;
@@ -84,56 +57,46 @@ public class CLoggerTestLogger : ITestLoggerWithParameters
 
     private void OnTestStart(object? _, TestRunStartEventArgs e)
     {
-        WriteData(nameof(OnTestStart), e);
+        WriteData(new TestStartMessage());
     }
 
     private void OnTestRunComplete(object? _, TestRunCompleteEventArgs e)
     {
-        WriteData(nameof(OnTestRunComplete), e);
-        
+        WriteData(TestRunCompleteMessage.FromArgs(e));
         _writer!.Dispose();
         _client!.Dispose();
     }
 
     private void OnTestResult(object? _, TestResultEventArgs e)
     {
-        WriteData(nameof(OnTestResult), e);
+        WriteData(
+            Common.Messages.TestResultMessage.FromTestResult(e.Result)
+        );
     }
 
     private void OnTestRunMessage(object? _, TestRunMessageEventArgs e)
     {
-        WriteData(nameof(OnTestRunMessage), e);
+        /* WriteData(nameof(OnTestRunMessage), e); */
     }
 
     private void OnDiscoveredTests(object? sender, DiscoveredTestsEventArgs e)
     {
-        WriteData(nameof(OnDiscoveredTests), e);
+        /* WriteData(nameof(OnDiscoveredTests), e); */
     }
 
     private void OnDiscoveryComplete(object? sender, DiscoveryCompleteEventArgs e)
     {
-        WriteData(nameof(OnDiscoveryComplete), e);
+        /* WriteData(nameof(OnDiscoveryComplete), e); */
     }
     
     private void OnDiscoveryStart(object? sender, DiscoveryStartEventArgs e)
     {
-        WriteData(nameof(OnDiscoveryStart), e);
+        /* WriteData(nameof(OnDiscoveryStart), e); */
     }
 
-    private void WriteData(string category, object data)
+    private void WriteData<T>(T data)
+        where T : MessageBase
     {
-        _writer!.WriteLine($"====== COLLECTOR: {category} ======");
-
-        try 
-        {
-            var raw = JsonSerializer.Serialize(data, jsonOptions);
-            _writer!.WriteLine(raw);
-        } 
-        catch(Exception ex)
-        {
-            _writer!.WriteLine(ex.ToString());
-        }
-
-        _writer!.WriteLine("=====================================");
+       _writer!.WriteLine(JsonSerializer.Serialize<MessageBase>(data)); 
     }
 }
