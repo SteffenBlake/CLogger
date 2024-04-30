@@ -23,7 +23,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CLogger.TestLogger\CLogger.TestLogger.csproj" />
-    <ProjectReference Include="..\CLogger.TestCollector\CLogger.TestCollector.csproj" />
   </ItemGroup>
 
 </Project>

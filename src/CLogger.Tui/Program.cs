@@ -26,14 +26,5 @@ catch (OperationCanceledException) {}
 
 static async Task Run(CliOptions options)
 {
-    /* Console.WriteLine( */
-    /*     $"Waiting for debugger to attach, ProcessId: {Environment.ProcessId}" */
-    /* ); */
-    /* while (!Debugger.IsAttached) */
-    /* { */
-    /*     await Task.Delay(1000); */
-    /* } */
-
     await Startup.RunAsync(options);
 }
-

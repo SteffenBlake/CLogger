@@ -7,6 +7,10 @@
             "request": "launch",
             "console": "integratedTerminal",
             "program": "CLogger.Tui.dll",
+            "args": [
+                "--", 
+                "../../../../CLogger.UnitTests/CLogger.UnitTests.csproj"
+            ],
             "cwd": "${workspaceFolder}/CLogger.Tui/bin/Debug/net8.0/"
         }
     ]
