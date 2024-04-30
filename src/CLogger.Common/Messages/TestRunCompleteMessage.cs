@@ -1,4 +1,5 @@
-using MessagePack;
+using CLogger.Common.Enums;
+using CLogger.Common.Model;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.Client;
 
 namespace CLogger.Common.Messages;
@@ -15,10 +16,9 @@ public class TestRunCompleteMessage : MessageBase
         };
     }
 
-    public override Task<string> Invoke(Model modelState)
+    public override async Task InvokeAsync(ModelState modelState)
     {
-        modelState.Running = false;
-
-        return Task.FromResult("Test Run Completed");
+       await modelState.MetaInfo
+           .UpdateElapsedAsync(ElapsedTimeInRunningTests);
     }
 }

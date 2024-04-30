@@ -1,7 +1,5 @@
 ﻿using System.IO.Pipes;
 using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Text.Json.Serialization.Metadata;
 using CLogger.Common.Messages;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.Client;
@@ -46,18 +44,9 @@ public class CLoggerTestLogger : ITestLoggerWithParameters
             AutoFlush = true
         };
 
-        events.TestRunStart += OnTestStart;
         events.TestRunComplete += OnTestRunComplete;
         events.TestResult += OnTestResult;
-        events.TestRunMessage += OnTestRunMessage;
         events.DiscoveredTests += OnDiscoveredTests;
-        events.DiscoveryStart += OnDiscoveryStart;
-        events.DiscoveryComplete += OnDiscoveryComplete;
-    }
-
-    private void OnTestStart(object? _, TestRunStartEventArgs e)
-    {
-        WriteData(new TestStartMessage());
     }
 
     private void OnTestRunComplete(object? _, TestRunCompleteEventArgs e)
@@ -74,24 +63,19 @@ public class CLoggerTestLogger : ITestLoggerWithParameters
         );
     }
 
-    private void OnTestRunMessage(object? _, TestRunMessageEventArgs e)
-    {
-        /* WriteData(nameof(OnTestRunMessage), e); */
-    }
-
     private void OnDiscoveredTests(object? sender, DiscoveredTestsEventArgs e)
     {
-        /* WriteData(nameof(OnDiscoveredTests), e); */
-    }
+        if (e.DiscoveredTestCases == null)
+        {
+            return;
+        }
 
-    private void OnDiscoveryComplete(object? sender, DiscoveryCompleteEventArgs e)
-    {
-        /* WriteData(nameof(OnDiscoveryComplete), e); */
-    }
-    
-    private void OnDiscoveryStart(object? sender, DiscoveryStartEventArgs e)
-    {
-        /* WriteData(nameof(OnDiscoveryStart), e); */
+        foreach(var discovered in e.DiscoveredTestCases)
+        {
+            WriteData(
+                TestDiscoveryMessage.FromTestCase(discovered)
+            );
+        }
     }
 
     private void WriteData<T>(T data)

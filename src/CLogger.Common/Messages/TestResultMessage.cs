@@ -1,13 +1,11 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
+using CLogger.Common.Enums;
+using CLogger.Common.Model;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel;
 
 namespace CLogger.Common.Messages;
 
 public class TestResultMessage : MessageBase 
 {
-    public string TestResult { get; init; } = nameof(TestResult);
-
     public required TestOutcome Outcome { get; init; } 
 
     public required string? ErrorMessage { get; init; }
@@ -36,14 +34,24 @@ public class TestResultMessage : MessageBase
         FullyQualifiedName = result.TestCase.FullyQualifiedName
     };
 
-    public override Task<string> Invoke(Model modelState)
+    public override async Task InvokeAsync(ModelState modelState)
     {
-        var options = new JsonSerializerOptions
-        {
-            WriteIndented = true
-        };
-        options.Converters.Add(new JsonStringEnumConverter());
+        var info = ToInfo();
+        await modelState.TestResultAsync(info); 
+    }
 
-        return Task.FromResult(JsonSerializer.Serialize(this, options));
+    private TestInfo ToInfo()
+    {
+        return new()
+        {
+            State = (TestState)Outcome,
+            ErrorMessage = ErrorMessage,
+            ErrorStackTrace = ErrorStackTrace,
+            Duration = Duration,
+            StartTime = StartTime,
+            EndTime = EndTime,
+            DisplayName = DisplayName,
+            FullyQualifiedName = FullyQualifiedName
+        };
     }
 }
