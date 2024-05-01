@@ -18,7 +18,6 @@ public class TestRunCompleteMessage : MessageBase
 
     public override async Task InvokeAsync(ModelState modelState)
     {
-       await modelState.MetaInfo
-           .UpdateElapsedAsync(ElapsedTimeInRunningTests);
+       await modelState.MetaInfo.Elapsed.WriteAsync(ElapsedTimeInRunningTests);
     }
 }

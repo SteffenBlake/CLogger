@@ -22,7 +22,7 @@ public class Application(ModelState modelState)
     
     private async Task WatchTestProcessId()
     {
-        var events = ModelState.MetaInfo.OnTestProcessId.Subscribe().ReadAllAsync();
+        var events = ModelState.MetaInfo.TestProcessId.Subscribe();
         await foreach(var _ in events)
         {
             Console.WriteLine($"PROCESS ID: {ModelState.MetaInfo.TestProcessId}");
@@ -31,7 +31,7 @@ public class Application(ModelState modelState)
     
     private async Task WatchElapsed()
     {
-        var events = ModelState.MetaInfo.OnElapsed.Subscribe().ReadAllAsync();
+        var events = ModelState.MetaInfo.Elapsed.Subscribe();
         await foreach(var _ in events)
         {
             Console.WriteLine($"TOTAL ELAPSED: {ModelState.MetaInfo.Elapsed}");
@@ -40,10 +40,10 @@ public class Application(ModelState modelState)
     
     private async Task WatchAppState()
     {
-        var events = ModelState.OnAppState.Subscribe().ReadAllAsync();
+        var events = ModelState.AppState.Subscribe();
         await foreach(var _ in events)
         {
-            Console.WriteLine($"APP STATE: {ModelState.State}");
+            Console.WriteLine($"APP STATE: {ModelState.AppState}");
         }
     }
     
@@ -55,7 +55,7 @@ public class Application(ModelState modelState)
         };
         options.Converters.Add(new JsonStringEnumConverter());
 
-        var events = ModelState.OnNewTest.Subscribe().ReadAllAsync();
+        var events = ModelState.OnNewTest.Subscribe();
         await foreach(var testId in events)
         {
             var testInfo = ModelState.TestInfos[testId];
@@ -73,7 +73,7 @@ public class Application(ModelState modelState)
         };
         options.Converters.Add(new JsonStringEnumConverter());
         
-        var events = ModelState.OnUpdatedTest.Subscribe().ReadAllAsync();
+        var events = ModelState.OnUpdatedTest.Subscribe();
         await foreach(var testId in events)
         {
             var testInfo = ModelState.TestInfos[testId];

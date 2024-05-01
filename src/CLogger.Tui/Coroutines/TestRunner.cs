@@ -1,7 +1,4 @@
-using System;
-using System.Buffers;
 using System.IO.Pipes;
-using System.Linq;
 using System.Text.Json;
 using CLogger.Common.Enums;
 using CLogger.Common.Messages;
@@ -28,12 +25,12 @@ public static class TestRunner
         bool discover
     )
     {
-        if (modelState.State == AppState.Busy)
+        if (modelState.AppState.Value == AppState.Busy)
         {
             return;
         }
        
-        await modelState.UpdateStateAsync(AppState.Busy);
+        await modelState.AppState.WriteAsync(AppState.Busy);
 
         var pipeName = Guid.NewGuid().ToString();
 
@@ -50,7 +47,7 @@ public static class TestRunner
             )
         );
 
-        await modelState.UpdateStateAsync(AppState.Idle);
+        await modelState.AppState.WriteAsync(AppState.Idle);
     }
 
     private static async Task RunDotnetTestAsync(
@@ -96,7 +93,7 @@ public static class TestRunner
                 var procIdRaw = e.Data.Split(" ")[2][0..^1];
                 var procId = int.Parse(procIdRaw);
                 // Have to do stuff Sync inside events because events suck
-                modelState.MetaInfo.UpdateTestProcessIdAsync(procId).Wait();
+                modelState.MetaInfo.TestProcessId.WriteAsync(procId).Wait();
             };
         }
        
@@ -122,7 +119,7 @@ public static class TestRunner
     
         while (
             !modelState.CancellationToken.IsCancellationRequested &&
-            modelState.State == AppState.Busy &&
+            modelState.AppState.Value == AppState.Busy &&
             !reader.EndOfStream
         )
         {

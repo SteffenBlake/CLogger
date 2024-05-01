@@ -1,62 +1,27 @@
-using System.Threading.Channels;
 using CLogger.Common.Enums;
 
 namespace CLogger.Common.Model;
 
-public class ModelState 
+public class ModelState(CancellationToken cancellationToken) 
 {
-    public ModelState()
-    {
-        MetaInfo = new(CancellationToken);
+    public CancellationToken CancellationToken { get; } = cancellationToken;
 
-        OnNewTest = new(_newTestEvents.Reader);
-        OnUpdatedTest = new(_updatedTestEvents.Reader);
-        OnClearTests = new(_clearTestEvents.Reader);
-        OnAppState = new(_appStateEvents.Reader);
-    }
-
-    public async Task PublishAsync()
-    {
-        await Task.WhenAll(
-            OnNewTest.PublishAsync(CancellationToken),
-            OnUpdatedTest.PublishAsync(CancellationToken),
-            OnClearTests.PublishAsync(CancellationToken),
-            OnAppState.PublishAsync(CancellationToken),
-            MetaInfo.PublishAsync()
-        );
-    }
-
-    private readonly CancellationTokenSource cancellationTokenSource = new();
-    public CancellationToken CancellationToken => cancellationTokenSource.Token;
-
-    public async Task CloseAsync() 
-    {
-        await cancellationTokenSource.CancelAsync();
-
-        _newTestEvents.Writer.Complete();
-        _appStateEvents.Writer.Complete();
-        _clearTestEvents.Writer.Complete();
-        _updatedTestEvents.Writer.Complete();
-
-        await MetaInfo.CloseAsync();
-    }
-
-    public TestMetaInfo MetaInfo { get; }
+    public TestMetaInfo MetaInfo { get; } = new(cancellationToken);
 
     private readonly Dictionary<string, TestInfo> _testInfos = [];
     public IReadOnlyDictionary<string, TestInfo> TestInfos => _testInfos;
 
-    private readonly Channel<string> _newTestEvents = Channel.CreateUnbounded<string>();
-    public ChannelBroadcaster<string> OnNewTest { get; }
+    public ChannelBroadcaster<string> OnNewTest { get; } 
+        = new("", cancellationToken);
 
-    private readonly Channel<string> _updatedTestEvents = Channel.CreateUnbounded<string>();
-    public ChannelBroadcaster<string> OnUpdatedTest { get; }
+    public ChannelBroadcaster<string> OnUpdatedTest { get; } 
+        = new("", cancellationToken);
     
-    private readonly Channel<bool> _clearTestEvents = Channel.CreateUnbounded<bool>();
-    public ChannelBroadcaster<bool> OnClearTests { get; }
+    public ChannelBroadcaster<bool> OnClearTests { get; } 
+        = new(true, cancellationToken);
 
-    private readonly Channel<bool> _appStateEvents = Channel.CreateUnbounded<bool>();
-    public ChannelBroadcaster<bool> OnAppState { get; }
+    public ChannelBroadcaster<AppState> AppState { get; } 
+        = new(Enums.AppState.Idle, cancellationToken);
 
     public async Task<bool> DiscoveredTestAsync(TestInfo testInfo)
     {
@@ -67,16 +32,14 @@ public class ModelState
 
         _testInfos[testInfo.FullyQualifiedName] = testInfo;
 
-        await _newTestEvents.Writer.WriteAsync(
-            testInfo.FullyQualifiedName, CancellationToken
-        );
+        await OnNewTest.WriteAsync(testInfo.FullyQualifiedName);
 
         return true;
     }
 
     public async Task TestResultAsync(TestInfo testInfo)
     {
-        // New Test Discovered, dont bother sending Update signal as well
+        // New Test Discovered, don't bother sending Update signal as well
         if (await DiscoveredTestAsync(testInfo))
         {
             return;
@@ -84,25 +47,22 @@ public class ModelState
         
         _testInfos[testInfo.FullyQualifiedName] = testInfo;
 
-        await _updatedTestEvents.Writer.WriteAsync(
-            testInfo.FullyQualifiedName, CancellationToken
-        );
+        await OnUpdatedTest.WriteAsync(testInfo.FullyQualifiedName);
     }
 
     public async Task ClearTestsAsync()
     {
-        await _clearTestEvents.Writer.WriteAsync(true, CancellationToken);
+        await OnClearTests.WriteAsync(true);
     }
 
-    public AppState State { get; private set; } = AppState.Idle;
-    public async Task UpdateStateAsync(AppState state)
+    public void Complete() 
     {
-        if (State == state)
-        {
-            return;
-        }
+        OnNewTest.Complete();
+        OnUpdatedTest.Complete();
+        OnClearTests.Complete();
 
-        State = state;
-        await _appStateEvents.Writer.WriteAsync(true, CancellationToken);
+        AppState.Complete();
+        
+        MetaInfo.Complete();
     }
 }
