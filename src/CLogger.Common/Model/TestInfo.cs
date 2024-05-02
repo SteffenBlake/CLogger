@@ -19,4 +19,21 @@ public class TestInfo
     public required string? DisplayName { get; set; }
     
     public required string FullyQualifiedName { get; set; }
+
+    public List<string> DeconstructPath()
+    {
+        var path = FullyQualifiedName.Split('.').ToList();
+
+        // TestCases for a Test have a (...) at the end to
+        // indicate the case
+        // We will want to split that out to its own piece of the path
+        var last = path.Last();
+        if (last.EndsWith(')'))
+        {
+           var prefix = last.Split('(')[0];
+           path.Insert(path.Count-1, prefix);
+        }
+
+        return path;
+    }
 }

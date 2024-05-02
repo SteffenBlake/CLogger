@@ -1,3 +1,4 @@
+using CLogger.Common.Model;
 using CommandLine;
 
 namespace CLogger.Tui.Models;
@@ -29,5 +30,15 @@ public class CliOptions
         HelpText = "The path to run tests from, defaults to $PWD",
         Required = false
     )]
-    public string Path { get; init; } = "."; 
+    public string Path { get; init; } = ".";
+
+
+    public async Task ApplyAsync(AppConfig config)
+    {
+        await Task.WhenAll(
+            config.DebugMode.WriteAsync(Debug),
+            config.Path.WriteAsync(Path),
+            config.Run.WriteAsync(Run)
+        );
+    }
 }

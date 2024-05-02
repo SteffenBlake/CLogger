@@ -3,25 +3,25 @@ using System.Text.Json;
 using CLogger.Common.Enums;
 using CLogger.Common.Messages;
 using CLogger.Common.Model;
-using CLogger.Tui.Models;
 
 namespace CLogger.Tui.Coroutines;
 
 public static class TestRunner
 {
-    public static async Task DiscoverAsync(ModelState modelState, CliOptions options)
+    public static async Task DiscoverAsync(ModelState modelState)
     {
-        await ExecuteAsync(modelState, options, discover:true);
+        Console.WriteLine("Discovery Started");
+        await ExecuteAsync(modelState, discover:true);
+        Console.WriteLine("Discovery Finished");
     }
 
-    public static async Task RunAsync(ModelState modelState, CliOptions options)
+    public static async Task RunAsync(ModelState modelState)
     {
-        await ExecuteAsync(modelState, options, discover:false);
+        await ExecuteAsync(modelState, discover:false);
     }
 
     private static async Task ExecuteAsync(
         ModelState modelState,
-        CliOptions options,
         bool discover
     )
     {
@@ -37,7 +37,6 @@ public static class TestRunner
         await Task.WhenAll(
             RunDotnetTestAsync(
                 modelState,
-                options,
                 pipeName,
                 discover
             ),
@@ -52,7 +51,6 @@ public static class TestRunner
 
     private static async Task RunDotnetTestAsync(
         ModelState modelState,
-        CliOptions options,
         string pipeName,
         bool discover
     )
@@ -74,14 +72,14 @@ public static class TestRunner
             dotnetTestArgs.Add("--list-tests");
         }
 
-        if (options.Path != ".")
+        if (modelState.AppConfig.Path.Value != ".")
         {
-            dotnetTestArgs.Add(Path.GetFullPath(options.Path));
+            dotnetTestArgs.Add(Path.GetFullPath(modelState.AppConfig.Path.Value));
         }
         
         process.StartInfo.Arguments = string.Join(" ", dotnetTestArgs);
 
-        if (options.Debug)
+        if (modelState.AppConfig.DebugMode.Value)
         {
             process.StartInfo.EnvironmentVariables["VSTEST_HOST_DEBUG"] = "1";
             process.OutputDataReceived += (_, e) => 
@@ -108,13 +106,22 @@ public static class TestRunner
         string pipeName
     )
     {
-        var pipeServer = new NamedPipeServerStream(
+        using var pipeServer = new NamedPipeServerStream(
             pipeName: pipeName,
             PipeDirection.InOut
         );
-        
-        await pipeServer.WaitForConnectionAsync(modelState.CancellationToken);
-    
+       
+        var timeoutTask = Task.Delay(TimeSpan.FromSeconds(10));
+
+        var actual = await Task.WhenAny(
+            timeoutTask,
+            pipeServer.WaitForConnectionAsync(modelState.CancellationToken)
+        );
+        if (actual == timeoutTask)
+        {
+            return;
+        }
+
         using var reader = new StreamReader(pipeServer);
     
         while (

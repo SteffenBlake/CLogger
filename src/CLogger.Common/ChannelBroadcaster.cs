@@ -2,12 +2,25 @@ using System.Threading.Channels;
 
 namespace CLogger.Common;
 
-public class ChannelBroadcaster<T>(T value, CancellationToken cancellationToken)
+public static class ChannelBroadcaster
 {
-    public T Value { get; private set; } = value;
-    private CancellationToken CancellationToken { get; } = cancellationToken;
+    public static readonly List<object> All = [];
+}
 
-    private readonly List<ChannelWriter<T>> _writers = [];
+public class ChannelBroadcaster<T>
+{
+    public T Value { get; private set; }
+    private CancellationToken CancellationToken { get; }
+
+    private readonly List<Channel<T>> _targets = [];
+
+    public ChannelBroadcaster(T value, CancellationToken cancellationToken)
+    {
+        Value = value;
+        CancellationToken = cancellationToken;
+        ChannelBroadcaster.All.Add(this);
+    }
+
     public async Task WriteAsync(T data)
     {
         // Dont bother publishing the event if the value didnt change
@@ -18,8 +31,8 @@ public class ChannelBroadcaster<T>(T value, CancellationToken cancellationToken)
         Value = data;
 
         // Pre-start all the ValueTasks
-        var writeTasks = _writers.Select(w => 
-            w.WriteAsync(data, CancellationToken)
+        var writeTasks = _targets.Select(w => 
+            w.Writer.WriteAsync(data, CancellationToken)
         ).ToList();
 
         // Await them (cant use Task.WhenAll with ValueTasks)
@@ -32,16 +45,16 @@ public class ChannelBroadcaster<T>(T value, CancellationToken cancellationToken)
     public IAsyncEnumerable<T> Subscribe()
     {
         var channel = Channel.CreateUnbounded<T>();
-        _writers.Add(channel.Writer);
-        return channel.Reader.ReadAllAsync();
+        _targets.Add(channel);
+        return channel.Reader.ReadAllAsync(CancellationToken);
     }
 
-    public void Complete() 
+    public bool TryComplete() 
     {
-        foreach(var writer in _writers)
-        {
-            writer.Complete();
-        }
+        var result = _targets.All(t => t.Writer.TryComplete());
+        _targets.Clear();
+        ChannelBroadcaster.All.Remove(this);
+        return result;
     }
 
     public override string? ToString() => Value?.ToString();

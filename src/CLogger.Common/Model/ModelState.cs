@@ -8,6 +8,8 @@ public class ModelState(CancellationToken cancellationToken)
 
     public TestMetaInfo MetaInfo { get; } = new(cancellationToken);
 
+    public AppConfig AppConfig { get; } = new(cancellationToken);
+
     private readonly Dictionary<string, TestInfo> _testInfos = [];
     public IReadOnlyDictionary<string, TestInfo> TestInfos => _testInfos;
 
@@ -55,14 +57,15 @@ public class ModelState(CancellationToken cancellationToken)
         await OnClearTests.WriteAsync(true);
     }
 
-    public void Complete() 
+    public bool TryComplete() 
     {
-        OnNewTest.Complete();
-        OnUpdatedTest.Complete();
-        OnClearTests.Complete();
-
-        AppState.Complete();
-        
-        MetaInfo.Complete();
+        return 
+            OnNewTest.TryComplete() &&
+            OnUpdatedTest.TryComplete() &&
+            OnClearTests.TryComplete() &&
+            AppState.TryComplete() &&
+            
+            MetaInfo.TryComplete() &&
+            AppConfig.TryComplete();
     }
 }

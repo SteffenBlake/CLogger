@@ -8,9 +8,10 @@ public class TestMetaInfo(CancellationToken cancellationToken)
     public ChannelBroadcaster<int> TestProcessId { get; } 
         = new(0, cancellationToken);
 
-    public void Complete()
+    public bool TryComplete()
     {
-        Elapsed.Complete();
-        TestProcessId.Complete();
+        return 
+            Elapsed.TryComplete() &&
+            TestProcessId.TryComplete();
     }
 }
