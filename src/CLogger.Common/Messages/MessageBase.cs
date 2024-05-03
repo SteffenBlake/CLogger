@@ -6,5 +6,7 @@ namespace CLogger.Common.Messages;
 [JsonConverter(typeof(MessageBaseConverter))]
 public abstract class MessageBase 
 {
-    public abstract Task InvokeAsync(ModelState modelState); 
+    public abstract Task InvokeAsync(
+        ModelState modelState, CancellationToken cancellationToken
+    ); 
 }

@@ -1,21 +1,15 @@
+using CLogger.Common.Channels;
+
 namespace CLogger.Common.Model;
 
-public class AppConfig(CancellationToken cancellationToken)
+public class AppConfig
 {
-    public ChannelBroadcaster<bool> DebugMode { get; }
-        = new(false, cancellationToken);
-
     public ChannelBroadcaster<string> Path { get; }
-        = new(".", cancellationToken);
-    
-    public ChannelBroadcaster<bool> Run { get; }
-        = new(false, cancellationToken);
-    
-    public bool TryComplete()
+
+    public AppConfig(
+        ChannelBroadcaster<string> path
+    )
     {
-        return
-            DebugMode.TryComplete() &&
-            Path.TryComplete() &&
-            Run.TryComplete();
+        Path = path;
     }
 }

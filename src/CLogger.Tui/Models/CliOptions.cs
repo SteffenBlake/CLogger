@@ -32,13 +32,10 @@ public class CliOptions
     )]
     public string Path { get; init; } = ".";
 
-
-    public async Task ApplyAsync(AppConfig config)
+    public async Task ApplyAsync(
+        AppConfig config, CancellationToken cancellationToken
+    )
     {
-        await Task.WhenAll(
-            config.DebugMode.WriteAsync(Debug),
-            config.Path.WriteAsync(Path),
-            config.Run.WriteAsync(Run)
-        );
+        await config.Path.WriteAsync(Path, cancellationToken);
     }
 }

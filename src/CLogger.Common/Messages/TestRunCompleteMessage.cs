@@ -1,4 +1,3 @@
-using CLogger.Common.Enums;
 using CLogger.Common.Model;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.Client;
 
@@ -16,8 +15,12 @@ public class TestRunCompleteMessage : MessageBase
         };
     }
 
-    public override async Task InvokeAsync(ModelState modelState)
+    public override async Task InvokeAsync(
+        ModelState modelState, CancellationToken cancellationToken
+    )
     {
-       await modelState.MetaInfo.Elapsed.WriteAsync(ElapsedTimeInRunningTests);
+        await modelState.MetaInfo.Elapsed.WriteAsync(
+            ElapsedTimeInRunningTests, cancellationToken
+        );
     }
 }

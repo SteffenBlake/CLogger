@@ -7,7 +7,7 @@ public class InfoBar : FrameView
 {
     private ModelState ModelState { get; }
     
-    public InfoBar(ModelState modelState, View testExplorer)
+    public InfoBar(ModelState modelState, TestExplorer testExplorer)
     {
         X = 0;
         Y = Pos.Bottom(testExplorer);

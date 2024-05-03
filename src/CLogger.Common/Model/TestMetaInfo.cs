@@ -1,17 +1,17 @@
+using CLogger.Common.Channels;
+using CLogger.Common.Enums;
+
 namespace CLogger.Common.Model;
 
-public class TestMetaInfo(CancellationToken cancellationToken)
+public class TestMetaInfo(
+    ChannelBroadcaster<AppState> state,
+    ChannelBroadcaster<TimeSpan> elapsed,
+    ChannelBroadcaster<int> testProcessId
+)
 {
-    public ChannelBroadcaster<TimeSpan> Elapsed { get; } 
-        = new(default, cancellationToken);
+    public ChannelBroadcaster<AppState> State { get; } = state; 
 
-    public ChannelBroadcaster<int> TestProcessId { get; } 
-        = new(0, cancellationToken);
+    public ChannelBroadcaster<TimeSpan> Elapsed { get; } = elapsed;
 
-    public bool TryComplete()
-    {
-        return 
-            Elapsed.TryComplete() &&
-            TestProcessId.TryComplete();
-    }
+    public ChannelBroadcaster<int> TestProcessId { get; } = testProcessId;
 }

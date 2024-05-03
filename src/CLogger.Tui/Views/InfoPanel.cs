@@ -9,8 +9,8 @@ public class InfoPanel : FrameView
     
     public InfoPanel(
         ModelState modelState, 
-        View actionBar,
-        View testExplorer
+        ActionBar actionBar,
+        TestExplorer testExplorer
     )
     {
         Title = "Info";

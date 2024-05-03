@@ -16,10 +16,12 @@ public class TestDiscoveryMessage : MessageBase
         FullyQualifiedName = result.FullyQualifiedName
     };
 
-    public override async Task InvokeAsync(ModelState modelState)
+    public override async Task InvokeAsync(
+        ModelState modelState, CancellationToken cancellationToken
+    )
     {
         var info = ToInfo();
-        await modelState.DiscoveredTestAsync(info); 
+        await modelState.DiscoveredTestAsync(info, cancellationToken); 
     }
 
     private TestInfo ToInfo()
