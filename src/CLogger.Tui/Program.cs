@@ -3,14 +3,6 @@ using CLogger.Tui.Models;
 using CommandLine;
 using Terminal.Gui;
 
-Application.Init();
-
-Colors.Base = ColorSchemes.Standard;
-Colors.Menu = ColorSchemes.StandardPicked;
-Colors.Dialog = ColorSchemes.StandardPicked;
-Colors.TopLevel = ColorSchemes.Standard;
-Colors.Error = ColorSchemes.Bad;
-
 var parser = new Parser(options =>
 {
     options.AutoHelp = true;

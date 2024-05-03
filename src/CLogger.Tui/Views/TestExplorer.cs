@@ -64,5 +64,5 @@ public class TestExplorer : FrameView
             _scrollBar.OtherScrollBarView.Position = TreeView.ScrollOffsetHorizontal;
             _scrollBar.Refresh();
         };
-    }
+    }        
 }

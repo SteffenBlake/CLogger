@@ -13,6 +13,14 @@ public static class Startup
 {
     public static async Task RunAsync(CliOptions options)
     {
+        Application.Init();
+        
+        Colors.Base = ColorSchemes.Standard;
+        Colors.Menu = ColorSchemes.StandardPicked;
+        Colors.Dialog = ColorSchemes.StandardPicked;
+        Colors.TopLevel = ColorSchemes.Standard;
+        Colors.Error = ColorSchemes.Bad;
+
         using var cancelled = new CancellationTokenSource();
 
         var builder = Host.CreateApplicationBuilder();
@@ -50,20 +58,9 @@ public static class Startup
         var mainWindow = app.Services.GetRequiredService<MainWindow>();
 
         Application.Run(mainWindow);
-
+        Application.MainLoop.Invoke(binderTask.Wait);
         Application.Shutdown();
-        
-        var timeoutTask = Task.Delay(5000);
-        var result = await Task.WhenAny(timeoutTask, binderTask);
-        if (result == timeoutTask)
-        {
-            // Cancel token shouldnt actually fire, as the below
-            // Task should be nearly instant, unless a resource
-            // Wasn't cleaned up properly
-            cancelled.Cancel();
-        }
 
-        await binderTask;
-
+        cancelled.Cancel();
     }
 }

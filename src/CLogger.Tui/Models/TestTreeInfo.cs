@@ -1,3 +1,4 @@
+using System.Collections;
 using CLogger.Common.Enums;
 using Terminal.Gui;
 using Terminal.Gui.Trees;
@@ -49,5 +50,22 @@ public class TestTreeInfo(string name, string id) : TreeNode
             _ => Picked ?
                 ColorSchemes.WarnPicked : ColorSchemes.Warn
         };
+    }
+
+    public IEnumerable<TestTreeInfo> GetPicked()
+    {
+        if (Infos.Count == 0 && Picked)
+        {
+            if (Picked)
+            {
+                yield return this;
+            }
+            yield break;
+        }
+
+        foreach(var picked in Infos.SelectMany(i => i.GetPicked()))
+        {
+            yield return picked;
+        }
     }
 }

@@ -1,4 +1,3 @@
-using CLogger.Common.Channels;
 using Terminal.Gui;
 
 namespace CLogger.Tui.Views;
@@ -9,8 +8,7 @@ public class MainWindow : Window
         ActionBar actionBar,
         TestExplorer testExplorer,
         InfoPanel infoPanel,
-        InfoBar infoBar,
-        ChannelBroadcasterContainer broadcasters
+        InfoBar infoBar
     )
     {
         Border.BorderStyle = BorderStyle.None;
@@ -20,9 +18,5 @@ public class MainWindow : Window
         Add(testExplorer);
         Add(infoPanel);
         Add(infoBar);
-
-        Closed += (_) => {
-            broadcasters.TryComplete();
-        };
     }
 }
