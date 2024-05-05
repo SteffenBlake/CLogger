@@ -27,4 +27,22 @@ public class Tests
     {
         Assert.Fail();
     }
+
+    [Test]
+    public void SuperDuperDuperNestedFailTest()
+    {
+        RecursiveFail(50);
+    }
+
+    private static void RecursiveFail(int n)
+    {
+        if (n == 0)
+        {
+            Assert.Fail();
+        }
+        else
+        {
+            RecursiveFail(n-1);
+        }
+    }
 }

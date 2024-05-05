@@ -2,6 +2,7 @@ using CLogger.Common.Enums;
 using CLogger.Common.Model;
 using CLogger.Tui.Models;
 using CLogger.Tui.Views;
+using Terminal.Gui;
 
 namespace CLogger.Tui.ViewModels;
 
@@ -26,14 +27,15 @@ public class ActionBarVM(
 
     private void OnReload(CancellationToken cancellationToken)
     {
-        ModelState.ClearTestsAsync(cancellationToken).Wait(cancellationToken);
-        var discover = new RunTestsArgs(
-            Discover: true,
-            Debug: false,
-            TestIds: []
-        );
-        ModelState.OnRunTests
-            .WriteAsync(discover, cancellationToken).Wait(cancellationToken);
+        Application.MainLoop.Invoke(() => {
+            ModelState.ClearTestsAsync(cancellationToken).Wait(cancellationToken);
+            var discover = new RunTestsArgs(
+                Discover: true,
+                Debug: false,
+                TestIds: []
+            );
+            ModelState.RunTestsAsync(discover, cancellationToken).Wait(cancellationToken);
+        });
     }
 
     private void OnRun(bool debug, CancellationToken cancellationToken)
@@ -50,8 +52,7 @@ public class ActionBarVM(
             TestIds: testIds
         );
 
-        ModelState.OnRunTests
-            .WriteAsync(run, cancellationToken).Wait(cancellationToken);
+        ModelState.RunTestsAsync(run, cancellationToken).Wait(cancellationToken);
     }
 
     private async Task WatchForBusy(CancellationToken cancellationToken)

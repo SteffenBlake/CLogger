@@ -1,20 +1,29 @@
-using System.Diagnostics;
 using System.IO.Pipes;
+using System.Text;
 using System.Text.Json;
 using CLogger.Common.Enums;
 using CLogger.Common.Messages;
 using CLogger.Common.Model;
 using CLogger.Tui.Models;
+using Microsoft.Extensions.Logging;
 
 namespace CLogger.Tui.ViewModels;
 
 public class TestRunnerVM(
     ModelState modelState,
-    CliOptions cliOptions
+    CliOptions cliOptions,
+    ILoggerFactory loggerFactory
 ) : IViewModel
 {
     private ModelState ModelState { get; } = modelState;
     private CliOptions CliOptions { get; } = cliOptions;
+
+    // Clogger.Dotnet.log special logger
+    // Specifically for logging dotnet test subprocess logs
+    public ILogger DotnetLogger { get; } = loggerFactory.CreateLogger("CLogger.Dotnet");
+
+    private readonly List<string> _filterEscapeChars = 
+        ["\\", "(", ")", "&", "|", "=", "!", "~"];
 
     public async Task BindAsync(CancellationToken cancellationToken)
     {
@@ -78,10 +87,23 @@ public class TestRunnerVM(
         {
             // https://learn.microsoft.com/en-us/dotnet/core/testing/selective-unit-tests?pivots=nunit#character-escaping 
             dotnetTestArgs.Add("--filter");
-            var prefixed = eventArgs.TestIds.Select(id =>
-                $"FullyQualifiedName={id.Replace(",", "%2C")}"
-            ).ToList();
-            dotnetTestArgs.Add(string.Join('|', prefixed));
+            var filters = new List<string>();
+            foreach(var id in eventArgs.TestIds)
+            {
+                var escapedId = id;
+                // https://github.com/Microsoft/vstest-docs/blob/main/docs/filter.md#syntax 
+                foreach(var c in _filterEscapeChars)
+                {
+                    escapedId = escapedId.Replace(c, $"\\{c}");
+                }
+                // https://learn.microsoft.com/en-us/dotnet/core/testing/selective-unit-tests?pivots=mstest#character-escaping 
+                escapedId = escapedId.Replace(",", "%2C");
+
+                filters.Add($"FullyQualifiedName={escapedId}");
+            }
+
+            var quoteWrapped = "\"" + string.Join('|', filters) + "\"";
+            dotnetTestArgs.Add(quoteWrapped);
         }
 
         if (ModelState.Config.Path.Value != ".")
@@ -110,9 +132,33 @@ public class TestRunnerVM(
                     .Wait();
             };
         }
-       
+        process.OutputDataReceived += (_, e) =>
+        {
+            if (string.IsNullOrEmpty(e.Data?.Trim()))
+            {
+                return;
+            }
+            DotnetLogger.LogInformation(e.Data!.Trim());
+        }; 
+        process.ErrorDataReceived += (_, e) =>
+        {
+            if (string.IsNullOrEmpty(e.Data?.Trim()))
+            {
+                return;
+            }
+            DotnetLogger.LogError(e.Data!.Trim());
+        };
+
+        DotnetLogger.LogDebug("Executing following command:");
+        DotnetLogger.LogDebug(
+            "    {fileName} {args}", 
+            process.StartInfo.FileName, 
+            process.StartInfo.Arguments
+        );
+
         process.Start();
         process.BeginOutputReadLine();
+        process.BeginErrorReadLine();
     
         await process.WaitForExitAsync(cancellationToken);
     }

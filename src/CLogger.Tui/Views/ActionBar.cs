@@ -1,15 +1,14 @@
-using CLogger.Common.Model;
 using Terminal.Gui;
 
 namespace CLogger.Tui.Views;
 
 public class ActionBar : FrameView 
 {
-    public HoverButton ReloadBtn { get; }
-    public HoverButton RunBtn { get; }
-    public HoverButton DebugBtn { get; }
+    public Button ReloadBtn { get; }
+    public Button RunBtn { get; }
+    public Button DebugBtn { get; }
     
-    public ActionBar(ModelState modelState)
+    public ActionBar()
     {
         Title = "Actions";
         X = Pos.Center();
@@ -19,30 +18,34 @@ public class ActionBar : FrameView
         Border.BorderStyle = BorderStyle.None;
         Border.DrawMarginFrame = false;
 
-        Add(ReloadBtn = new("", "Reload")
+        Add(ReloadBtn = new("")
         {
             X = 1,
             Y = 0,
             Height = 1,
+            Enabled = false
         });
+        ReloadBtn.Enter += (_) => ReloadBtn.Text = ": Reload";
+        ReloadBtn.Leave += (_) => ReloadBtn.Text = "";
 
-        Add(RunBtn = new("","Run Tests")
+        Add(RunBtn = new("")
         {
             X = Pos.Right(ReloadBtn) + 1,
             Y = 0,
             Height = 1,
+            Enabled = false
         });
+        RunBtn.Enter += (_) => RunBtn.Text = ": Run";
+        RunBtn.Leave += (_) => RunBtn.Text = "";
 
-        Add(DebugBtn = new("","Debug Tests")
+        Add(DebugBtn = new("")
         {
             X = Pos.Right(RunBtn) + 1,
             Y = 0,
             Height = 1,
+            Enabled = false
         });
-    }
-
-    public Task BindAsync()
-    {
-        return Task.CompletedTask;
+        DebugBtn.Enter += (_) => DebugBtn.Text = ": Debug";
+        DebugBtn.Leave += (_) => DebugBtn.Text = "";
     }
 }

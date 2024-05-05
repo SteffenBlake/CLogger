@@ -2,23 +2,29 @@ using CLogger.Common.Enums;
 using CLogger.Common.Model;
 using CLogger.Tui.Models;
 using CLogger.Tui.Views;
+using CLogger.Tui.Extensions;
+using Terminal.Gui;
+using static Terminal.Gui.View;
 
 namespace CLogger.Tui.ViewModels;
 
 public class TestExplorerVM(
-    TestExplorer view,
+    TestExplorer testExplorer,
     ModelState modelState
 ) : IViewModel
 {
-    private TestExplorer View { get; } = view;
+    private TestExplorer TestExplorer { get; } = testExplorer;
 
     private ModelState ModelState { get; } = modelState;
 
     public async Task BindAsync(CancellationToken cancellationToken)
     {
+        TestExplorer.TreeView.KeyPress += OnKeyPress;
+
         await Task.WhenAll(
             WatchDiscoveredTests(cancellationToken),
-            WatchUpdatedTests(cancellationToken)
+            WatchUpdatedTests(cancellationToken),
+            WatchClearTests(cancellationToken)
         );
     }
 
@@ -41,11 +47,11 @@ public class TestExplorerVM(
                 {
                     _targetMappings[targetId] = next = new(
                         name: path[n],
-                        id: id 
+                        id: id
                     );
                     if (parent == null)
                     {
-                        View.TreeView.AddObject(next);
+                        TestExplorer.TreeView.AddObject(next);
                     }
                     else
                     {
@@ -67,7 +73,7 @@ public class TestExplorerVM(
         await foreach(var id in ModelState.OnUpdatedTest.Subscribe(cancellationToken))
         {
             var path = ModelState.TestInfos[id].DeconstructPath();
-            var targetId = string.Join('/', path);
+            var targetId = "/" + string.Join('/', path);
             ReloadTestHeirarchy(_targetMappings[targetId]);
         }
         Console.WriteLine("WatchUpdatedTests Unbound!");
@@ -83,7 +89,7 @@ public class TestExplorerVM(
             target = target.Parent;
             LoadTestState(target);
         }
-        View.TreeView.RefreshObject(target);
+        TestExplorer.TreeView.RefreshObject(target);
     }
 
     private void LoadTestState(TestTreeInfo node)
@@ -100,12 +106,12 @@ public class TestExplorerVM(
                 if (child.TestState == TestState.Running)
                 {
                     node.TestState = TestState.Running;
-                    return;
+                    break;
                 }
                 if (child.TestState == TestState.Failed)
                 {
                     node.TestState = TestState.Failed;
-                    return;
+                    break;
                 }
                 if (child.TestState == TestState.Passed)
                 {
@@ -113,6 +119,30 @@ public class TestExplorerVM(
                 }
             }
         }
+
+        node.Picked = false;
         node.ReloadState();
+    }
+
+    private async Task WatchClearTests(CancellationToken cancellationToken)
+    {
+        var events = ModelState.OnClearTests.Subscribe(cancellationToken);
+        await foreach(var _ in events)
+        {
+            TestExplorer.TreeView.ClearObjects();
+            _targetMappings.Clear();
+        }
+    }
+
+    private void OnKeyPress(KeyEventEventArgs args)
+    {
+        if (args is (Key.p, false, false, false))
+        {
+            TestExplorer.OnPick();
+        } 
+        else if ( args is (Key.d, false, false, false))
+        {
+            TestExplorer.OnUnpick();
+        }
     }
 }

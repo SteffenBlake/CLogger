@@ -1,4 +1,3 @@
-using System.Collections;
 using CLogger.Common.Enums;
 using Terminal.Gui;
 using Terminal.Gui.Trees;
@@ -8,7 +7,7 @@ namespace CLogger.Tui.Models;
 public class TestTreeInfo(string name, string id) : TreeNode
 {
     public readonly string Id = id;
-
+    
     private readonly string Name = name;
 
     public TestState TestState { get; set; } = TestState.None;
@@ -44,7 +43,7 @@ public class TestTreeInfo(string name, string id) : TreeNode
                 ColorSchemes.StandardPicked : ColorSchemes.Standard,
             TestState.Passed => Picked ?
                 ColorSchemes.GoodPicked : ColorSchemes.Good,
-            TestState.Running => ColorSchemes.Standard,
+            TestState.Running => ColorSchemes.Interest,
             TestState.Failed => Picked ?
                 ColorSchemes.BadPicked : ColorSchemes.Bad,
             _ => Picked ?
@@ -52,20 +51,37 @@ public class TestTreeInfo(string name, string id) : TreeNode
         };
     }
 
-    public IEnumerable<TestTreeInfo> GetPicked()
+    private IEnumerable<TestTreeInfo> GetDescendants()
     {
-        if (Infos.Count == 0 && Picked)
+        // If this is a leaf, return itself
+        if (Infos.Count == 0)
         {
-            if (Picked)
-            {
-                yield return this;
-            }
+            yield return this;
             yield break;
         }
 
-        foreach(var picked in Infos.SelectMany(i => i.GetPicked()))
+        foreach(var descendant in Infos.SelectMany(i => i.GetDescendants()))
         {
-            yield return picked;
+            yield return descendant;
+        }
+    }
+
+    public IEnumerable<TestTreeInfo> GetPicked()
+    {
+        return GetDescendants().Where(d => d.Picked);
+    }
+
+    public IEnumerable<string> GetIds()
+    {
+        return GetDescendants().Select(d => d.Id);
+    }
+
+    public void SetPicked(bool picked)
+    {
+        foreach(var descendant in GetDescendants())
+        {
+            descendant.Picked = picked;
+            descendant.ReloadState();
         }
     }
 }

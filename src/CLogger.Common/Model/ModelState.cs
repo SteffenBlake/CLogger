@@ -1,4 +1,6 @@
+using System.Collections;
 using CLogger.Common.Channels;
+using CLogger.Common.Enums;
 
 namespace CLogger.Common.Model;
 
@@ -61,6 +63,21 @@ public class ModelState(
 
     public async Task ClearTestsAsync(CancellationToken cancellationToken)
     {
+        _testInfos.Clear();
         await OnClearTests.WriteAsync(true, cancellationToken);
+    }
+
+    public async Task RunTestsAsync(RunTestsArgs args, CancellationToken cancellationToken)
+    {
+        IEnumerable<string> testIds = 
+            args.TestIds.Count == 0 ? _testInfos.Keys : args.TestIds;
+
+        foreach(var testId in testIds)
+        {
+            _testInfos[testId].State = TestState.Running;
+            await OnUpdatedTest.WriteAsync(testId, cancellationToken);
+        }
+
+        await OnRunTests.WriteAsync(args, cancellationToken);
     }
 }

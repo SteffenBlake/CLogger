@@ -1,3 +1,4 @@
+using CLogger.Common.Model;
 using CLogger.Tui.Models;
 using Terminal.Gui;
 
@@ -14,7 +15,7 @@ public class TestExplorer : FrameView
         Title = "Tests";
         X = 0;
         Y = Pos.Bottom(actionBar);
-        Width = Dim.Percent(90f);
+        Width = Dim.Percent(20f);
         Height = Dim.Fill(margin: 1);
 
         Add(TreeView = new()
@@ -23,7 +24,7 @@ public class TestExplorer : FrameView
             Y = 0,
             Width = Dim.Fill(),
             Height = Dim.Fill(),
-            MultiSelect = true,
+            MultiSelect = false,
             ColorGetter = f => ((TestTreeInfo)f).ColorScheme
         });
 
@@ -64,5 +65,20 @@ public class TestExplorer : FrameView
             _scrollBar.OtherScrollBarView.Position = TreeView.ScrollOffsetHorizontal;
             _scrollBar.Refresh();
         };
-    }        
+    }
+
+    public void OnPick() => OnSetPicked(true);
+
+    public void OnUnpick() => OnSetPicked(false);
+
+    public void OnSetPicked(bool picked)
+    {
+        if (TreeView.SelectedObject is not TestTreeInfo selected)
+        {
+            return;
+        }
+
+        selected.SetPicked(picked);
+        TreeView.SetNeedsDisplay();
+    }
 }
