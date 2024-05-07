@@ -6,6 +6,7 @@ using CLogger.Common.Messages;
 using CLogger.Common.Model;
 using CLogger.Tui.Models;
 using Microsoft.Extensions.Logging;
+using Terminal.Gui;
 
 namespace CLogger.Tui.ViewModels;
 
@@ -20,7 +21,8 @@ public class TestRunnerVM(
 
     // Clogger.Dotnet.log special logger
     // Specifically for logging dotnet test subprocess logs
-    public ILogger DotnetLogger { get; } = loggerFactory.CreateLogger("CLogger.Dotnet");
+    public ILogger DotnetLogger { get; } 
+        = loggerFactory.CreateLogger("DotnetTest");
 
     private readonly List<string> _filterEscapeChars = 
         ["\\", "(", ")", "&", "|", "=", "!", "~"];
@@ -124,12 +126,12 @@ public class TestRunnerVM(
                 }
                 var procIdRaw = e.Data.Split(" ")[2][0..^1];
                 var procId = int.Parse(procIdRaw);
+
                 // Have to do stuff Sync inside events because events suck
                 ModelState
                     .MetaInfo
                     .TestProcessId
-                    .WriteAsync(procId, cancellationToken)
-                    .Wait();
+                    .WriteAsync(procId, cancellationToken).Wait();
             };
         }
         process.OutputDataReceived += (_, e) =>

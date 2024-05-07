@@ -63,6 +63,8 @@ public class ActionBarVM(
             ActionBar.ReloadBtn.Enabled = state == AppState.Idle;
             ActionBar.RunBtn.Enabled = state == AppState.Idle;
             ActionBar.DebugBtn.Enabled = state == AppState.Idle;
+            ActionBar.CancelBtn.Enabled = state != AppState.Idle;
+            ActionBar.CancelBtn.Visible = state != AppState.Idle;
         }
     }
 }

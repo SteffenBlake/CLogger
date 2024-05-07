@@ -28,6 +28,9 @@ public class TestExplorer : FrameView
             ColorGetter = f => ((TestTreeInfo)f).ColorScheme
         });
 
+        TreeView.Style.CollapseableSymbol = new Rune('');
+        TreeView.Style.ExpandableSymbol = new Rune('');
+
         SetupScrollbar();
     }
 
@@ -67,18 +70,20 @@ public class TestExplorer : FrameView
         };
     }
 
-    public void OnPick() => OnSetPicked(true);
+    public bool OnPick() => OnSetPicked(true);
 
-    public void OnUnpick() => OnSetPicked(false);
+    public bool OnUnpick() => OnSetPicked(false);
 
-    public void OnSetPicked(bool picked)
+    public bool OnSetPicked(bool picked)
     {
         if (TreeView.SelectedObject is not TestTreeInfo selected)
         {
-            return;
+            return false;
         }
 
         selected.SetPicked(picked);
         TreeView.SetNeedsDisplay();
+        
+        return true;
     }
 }

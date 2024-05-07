@@ -1,5 +1,6 @@
 using System.Text;
 using CLogger.Common.Model;
+using CLogger.Tui.Extensions;
 using Terminal.Gui;
 
 namespace CLogger.Tui.Views;
@@ -7,6 +8,7 @@ namespace CLogger.Tui.Views;
 public class InfoPanel : FrameView 
 {
     public FrameView DisplayNameFrame { get; }
+    public FrameView StatusFrame { get; }
     public FrameView DurationFrame { get; }
     public FrameView StartTimeFrame { get; }
     public FrameView EndTimeFrame { get; }
@@ -33,12 +35,20 @@ public class InfoPanel : FrameView
             Y = 0,
             Visible = false
         }); 
-        Add(DurationFrame = new()
+        Add(StatusFrame = new()
         {
             Height = 3,
             Width = Dim.Fill(),
             X = 0,
             Y = Pos.Bottom(DisplayNameFrame),
+            Visible = false
+        });
+        Add(DurationFrame = new()
+        {
+            Height = 3,
+            Width = Dim.Fill(),
+            X = 0,
+            Y = Pos.Bottom(StatusFrame),
             Visible = false
         });
         Add(StartTimeFrame = new()
@@ -115,6 +125,10 @@ public class InfoPanel : FrameView
             DisplayNameFrame.Visible = true;
             DisplayNameFrame.Text = $"Name: {data.DisplayName}";
         }
+
+        StatusFrame.Visible = true;
+        StatusFrame.Text = $"Status: {data.State} ({data.State.ToIcon()})";
+        StatusFrame.ColorScheme = data.State.ToColorScheme(false);
 
         if (!data.Duration.HasValue)
         {

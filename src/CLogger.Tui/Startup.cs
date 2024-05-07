@@ -21,6 +21,11 @@ public static class Startup
         Application.Init();
 
         try {
+            Application.Driver.UnChecked = new Rune('');
+            Application.Driver.Checked = new Rune('');
+
+            Application.QuitKey = Key.q;
+            
             Colors.Base = ColorSchemes.Standard;
             Colors.Menu = ColorSchemes.Standard;
             Colors.Dialog = ColorSchemes.Standard;
@@ -50,6 +55,7 @@ public static class Startup
             builder.Services.AddSingleton<TestExplorer>();
             builder.Services.AddSingleton<InfoPanel>();
             builder.Services.AddSingleton<InfoBar>();
+            builder.Services.AddSingleton<ProcessIdDialog>();
 
             // ViewModels
             builder.Services.AddSingleton<ViewModelBinder>();
@@ -58,6 +64,9 @@ public static class Startup
             builder.Services.AddSingleton<IViewModel, ActionBarVM>(); 
             builder.Services.AddSingleton<IViewModel, TestExplorerVM>(); 
             builder.Services.AddSingleton<IViewModel, InfoPanelVM>(); 
+            builder.Services.AddSingleton<IViewModel, InfoBarVM>(); 
+            builder.Services.AddSingleton<IViewModel, KeybindsVM>(); 
+            builder.Services.AddSingleton<IViewModel, ProcessIdDialogVM>(); 
             
             var app = builder.Build();
 
@@ -105,13 +114,13 @@ public static class Startup
             NLog.LogLevel.Trace,
             NLog.LogLevel.Fatal,
             "CLogger.TUI",
-            "*"
+            "CLogger.*"
         );
 
         // dotnet test sub process logging
         loggingConfig.AddTarget(new FileTarget()
         {
-            Name = "CLogger.Dotnet",
+            Name = "DotnetTest",
             FileName = Path.Join(logDir, "CLogger.Dotnet.log"),
             ArchiveOldFileOnStartup = true,                
             Layout = 
@@ -120,8 +129,8 @@ public static class Startup
         loggingConfig.AddRule(
             NLog.LogLevel.Trace,
             NLog.LogLevel.Fatal,
-            "CLogger.Dotnet",
-            "Clogger.Dotnet"
+            "DotnetTest",
+            "DotnetTest"
         );
         
         logging.ClearProviders();

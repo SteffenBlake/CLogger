@@ -2,9 +2,6 @@ using CLogger.Common.Enums;
 using CLogger.Common.Model;
 using CLogger.Tui.Models;
 using CLogger.Tui.Views;
-using CLogger.Tui.Extensions;
-using Terminal.Gui;
-using static Terminal.Gui.View;
 
 namespace CLogger.Tui.ViewModels;
 
@@ -19,8 +16,6 @@ public class TestExplorerVM(
 
     public async Task BindAsync(CancellationToken cancellationToken)
     {
-        TestExplorer.TreeView.KeyPress += OnKeyPress;
-
         await Task.WhenAll(
             WatchDiscoveredTests(cancellationToken),
             WatchUpdatedTests(cancellationToken),
@@ -131,18 +126,6 @@ public class TestExplorerVM(
         {
             TestExplorer.TreeView.ClearObjects();
             _targetMappings.Clear();
-        }
-    }
-
-    private void OnKeyPress(KeyEventEventArgs args)
-    {
-        if (args is (Key.p, false, false, false))
-        {
-            TestExplorer.OnPick();
-        } 
-        else if ( args is (Key.d, false, false, false))
-        {
-            TestExplorer.OnUnpick();
         }
     }
 }

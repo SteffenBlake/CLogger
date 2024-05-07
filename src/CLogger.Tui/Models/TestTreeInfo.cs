@@ -1,4 +1,5 @@
 using CLogger.Common.Enums;
+using CLogger.Tui.Extensions;
 using Terminal.Gui;
 using Terminal.Gui.Trees;
 
@@ -26,29 +27,11 @@ public class TestTreeInfo(string name, string id) : TreeNode
 
     public void ReloadState()
     {
-        var prefix = TestState switch
-        {
-            TestState.None => "",
-            TestState.Passed => "",
-            TestState.Running => "",
-            TestState.Failed => "",
-            _ => "",
-        };
+        var prefix = TestState.ToIcon();
+        var pickedCarrot = Picked ? ">" : ""; 
+        _displayTest = " " + pickedCarrot + prefix + " " + Name;
 
-        _displayTest = " " + (Picked ? ">" : "") + prefix + " " + Name;
-
-        ColorScheme = TestState switch
-        {
-            TestState.None => Picked ? 
-                ColorSchemes.StandardPicked : ColorSchemes.Standard,
-            TestState.Passed => Picked ?
-                ColorSchemes.GoodPicked : ColorSchemes.Good,
-            TestState.Running => ColorSchemes.Interest,
-            TestState.Failed => Picked ?
-                ColorSchemes.BadPicked : ColorSchemes.Bad,
-            _ => Picked ?
-                ColorSchemes.WarnPicked : ColorSchemes.Warn
-        };
+        ColorScheme = TestState.ToColorScheme(Picked);
     }
 
     private IEnumerable<TestTreeInfo> GetDescendants()

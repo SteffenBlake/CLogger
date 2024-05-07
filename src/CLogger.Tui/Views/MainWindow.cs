@@ -8,7 +8,8 @@ public class MainWindow : Window
         ActionBar actionBar,
         TestExplorer testExplorer,
         InfoPanel infoPanel,
-        InfoBar infoBar
+        InfoBar infoBar,
+        ProcessIdDialog processIdDialog
     )
     {
         Border.BorderStyle = BorderStyle.None;
@@ -18,5 +19,6 @@ public class MainWindow : Window
         Add(testExplorer);
         Add(infoPanel);
         Add(infoBar);
+        Add(processIdDialog);
     }
 }
