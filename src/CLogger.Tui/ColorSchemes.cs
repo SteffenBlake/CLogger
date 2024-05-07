@@ -87,11 +87,11 @@ public static class ColorSchemes
 
     public static readonly ColorScheme InterestNoFocus = new()
     {
-        Normal = new(Color.Blue, Color.Black),
-        Focus = new(Color.Blue, Color.Black),
-        Disabled = new(Color.DarkGray, Color.Black),
-        HotFocus = new (Color.Blue, Color.Cyan),
-        HotNormal = new (Color.Blue, Color.Cyan)
+        Normal = new(Color.Cyan, Color.Black),
+        Focus = new(Color.Cyan, Color.Black),
+        Disabled = new(Color.DarkGray, Color.Cyan),
+        HotFocus = new (Color.Cyan, Color.Cyan),
+        HotNormal = new (Color.Cyan, Color.Cyan)
     };
 
     public static readonly ColorScheme BadNoFocus = new()

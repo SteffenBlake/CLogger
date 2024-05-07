@@ -25,6 +25,9 @@ public static class Startup
             Application.Driver.Checked = new Rune('');
 
             Application.QuitKey = Key.q;
+
+            Application.IsMouseDisabled = true;
+            Application.Driver.StopReportingMouseMoves();
             
             Colors.Base = ColorSchemes.Standard;
             Colors.Menu = ColorSchemes.Standard;

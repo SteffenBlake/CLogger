@@ -2,7 +2,6 @@ using CLogger.Common.Enums;
 using CLogger.Common.Model;
 using CLogger.Tui.Views;
 using Microsoft.Extensions.Logging;
-using Terminal.Gui;
 
 namespace CLogger.Tui.ViewModels;
 

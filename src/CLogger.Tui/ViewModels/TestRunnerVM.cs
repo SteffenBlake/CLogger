@@ -254,7 +254,6 @@ public class TestRunnerVM(
 
             var procId = next.Split(" ")[2][0..^1];
             Logger.LogInformation("Process Id Recieved: {procId}", procId);
-            // Have to do stuff Sync inside events because events suck
 
             await ModelState
                 .MetaInfo
@@ -263,6 +262,7 @@ public class TestRunnerVM(
 
             Logger.LogInformation("Process Id written to channel successfully");
         }
+
         Logger.LogInformation("Standard Out task completed successfully!");
     }
 
@@ -320,13 +320,14 @@ public class TestRunnerVM(
    
         Logger.LogInformation("Pipe Server client connected, listening for data!");
         while (
-            !cancellationToken.IsCancellationRequested &&
-            ModelState.MetaInfo.State.Value == AppState.Busy &&
-            !reader.EndOfStream
+            !cancellationToken.IsCancellationRequested
         )
         {
-            var next = await reader.ReadLineAsync(cancellationToken)
-                ?? throw new InvalidOperationException();
+            var next = await reader.ReadLineAsync(cancellationToken);
+            if (next == null)
+            {
+                break;
+            }
 
             var msg = JsonSerializer.Deserialize<MessageBase>(next)
                 ?? throw new InvalidOperationException();

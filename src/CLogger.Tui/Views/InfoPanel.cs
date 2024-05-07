@@ -95,7 +95,8 @@ public class InfoPanel : FrameView
             Y = 0,
             ColorScheme = ColorSchemes.BadNoFocus,
             WordWrap = true,
-            Enabled = true 
+            Enabled = true,
+            ReadOnly = true
         });
 
         ErrorScrollView.DrawContent += (_) => RedrawError();
