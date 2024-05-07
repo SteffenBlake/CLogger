@@ -1,4 +1,3 @@
-using System.Collections;
 using CLogger.Common.Channels;
 using CLogger.Common.Enums;
 
@@ -27,7 +26,7 @@ public class ModelState(
     public ChannelBroadcaster<bool> OnClearTests { get; } = onClearTests; 
 
     public ChannelBroadcaster<RunTestsArgs> OnRunTests { get; } = onRunTests; 
-    
+   
     public async Task<bool> DiscoveredTestAsync(
         TestInfo testInfo, CancellationToken cancellationToken
     )
@@ -79,5 +78,40 @@ public class ModelState(
         }
 
         await OnRunTests.WriteAsync(args, cancellationToken);
+    }
+
+    public async Task CancelTestsAsync(
+        IList<string> testIds, CancellationToken cancellationToken
+    )
+    {
+        if (_testInfos.Count == 0)
+        {
+            return;
+        }
+
+        if (testIds.Count == 0)
+        {
+            await CancelTestsAsync([.. _testInfos.Keys], cancellationToken);
+            return;
+        }
+
+        var testResultTasks = testIds.Select(testId => 
+        {
+            var original = _testInfos[testId];
+            var cancelled = new TestInfo()
+            {
+                State = TestState.Canceled,
+                DisplayName = original.DisplayName,
+                Duration = null,
+                StartTime = null,
+                EndTime = null,
+                ErrorMessage = null,
+                ErrorStackTrace = null,
+                FullyQualifiedName = original.FullyQualifiedName
+            };
+            return TestResultAsync(cancelled, cancellationToken);
+        }).ToList();
+
+        await Task.WhenAll(testResultTasks);
     }
 }

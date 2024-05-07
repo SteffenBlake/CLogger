@@ -1,3 +1,4 @@
+using CLogger.Common.Enums;
 using Terminal.Gui;
 
 namespace CLogger.Tui.Views;
@@ -43,7 +44,7 @@ public class InfoBar : FrameView
         CancelSpacer = AddSpacer(UnpickText);
         CancelText = AddLabel(CancelSpacer, "[C]ancel", ColorSchemes.Bad);
 
-        OnState(busy:true);
+        OnState(AppState.Busy);
     }
 
     private Label AddLabel(
@@ -76,16 +77,16 @@ public class InfoBar : FrameView
         return spacer;
     }
 
-    public void OnState(bool busy)
+    public void OnState(AppState appState)
     {
-         ReloadSpacer.Visible = !busy;
-         ReloadText.Visible = !busy;
-         RunSpacer.Visible = !busy;
-         RunText.Visible = !busy;
-         DebugSpacer.Visible = !busy;
-         DebugText.Visible = !busy;
+         ReloadSpacer.Visible = appState == AppState.Idle;
+         ReloadText.Visible = appState == AppState.Idle;
+         RunSpacer.Visible = appState == AppState.Idle;
+         RunText.Visible = appState == AppState.Idle;
+         DebugSpacer.Visible = appState == AppState.Idle;
+         DebugText.Visible = appState == AppState.Idle;
 
-         CancelSpacer.Visible = busy;
-         CancelText.Visible = busy;
+         CancelSpacer.Visible = appState == AppState.Busy;
+         CancelText.Visible = appState == AppState.Busy;
     }
 }

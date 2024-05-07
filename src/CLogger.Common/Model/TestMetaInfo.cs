@@ -6,12 +6,12 @@ namespace CLogger.Common.Model;
 public class TestMetaInfo(
     ChannelBroadcaster<AppState> state,
     ChannelBroadcaster<TimeSpan> elapsed,
-    ChannelBroadcaster<int> testProcessId
+    ChannelBroadcaster<string> testProcessId
 )
 {
     public ChannelBroadcaster<AppState> State { get; } = state; 
 
     public ChannelBroadcaster<TimeSpan> Elapsed { get; } = elapsed;
 
-    public ChannelBroadcaster<int> TestProcessId { get; } = testProcessId;
+    public ChannelBroadcaster<string> TestProcessId { get; } = testProcessId;
 }

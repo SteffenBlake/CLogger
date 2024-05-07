@@ -1,4 +1,3 @@
-using CLogger.Common.Enums;
 using CLogger.Common.Model;
 using CLogger.Tui.Views;
 using Terminal.Gui;
@@ -24,7 +23,7 @@ public class InfoBarVM(
         await foreach(var state in events)
         {
             Application.MainLoop.Invoke(() => 
-                InfoBar.OnState(state == AppState.Busy)
+                InfoBar.OnState(state)
             );
         }
     }
