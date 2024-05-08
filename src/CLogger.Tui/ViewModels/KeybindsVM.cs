@@ -6,17 +6,24 @@ namespace CLogger.Tui.ViewModels;
 
 public class KeybindsVM : IViewModel
 {
+    private ActionBar ActionBar { get; }
     private TestExplorer TestExplorer { get; }
 
     public KeybindsVM(
+        ActionBar actionBar,
         TestExplorer testExplorer
     )
     {
+        ActionBar = actionBar;
         TestExplorer = testExplorer;
         _keybinds =  new()
         {
             { Keybinds.ExplorerPick, TestExplorer.OnPick },
             { Keybinds.ExplorerUnpick, TestExplorer.OnUnpick },
+            { Keybinds.Reload, ActionBar.Reload },
+            { Keybinds.Run, ActionBar.Run },
+            { Keybinds.Debug, ActionBar.Debug },
+            { Keybinds.Cancel, ActionBar.Cancel },
         };
     }
 

@@ -63,4 +63,28 @@ public class ActionBar : FrameView
         CancelBtn.Enter += (_) => CancelBtn.Text = ": Cancel";
         CancelBtn.Leave += (_) => CancelBtn.Text = "";
     }
+
+    public bool Reload()
+    {
+        ReloadBtn.OnClicked();
+        return true;
+    }
+    
+    public bool Run()
+    {
+        RunBtn.OnClicked();
+        return true;
+    }
+    
+    public bool Debug()
+    {
+        DebugBtn.OnClicked();
+        return true;
+    }
+
+    public bool Cancel()
+    {
+        CancelBtn.OnClicked();
+        return true;
+    }
 }
