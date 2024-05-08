@@ -5,11 +5,11 @@ namespace CLogger.Tui.Views;
 
 public class InfoBar : FrameView 
 {
+    public Label ScrollText { get; }
+    public Label PickSpacer { get; }
     public Label PickText { get; }
     public Label UnpickSpacer { get; }
     public Label UnpickText { get; }
-    public Label ScrollSpacer { get; }
-    public Label ScrollText { get; }
     public Label ReloadSpacer { get; }
     public Label ReloadText { get; }
     public Label RunSpacer { get; }
@@ -32,13 +32,16 @@ public class InfoBar : FrameView
         Border.BorderStyle = BorderStyle.None;
         Border.DrawMarginFrame = false;
 
-        PickText = AddLabel(null, "[P]ick", ColorSchemes.Good);
-        ScrollSpacer = AddSpacer(PickText);
-        ScrollText = AddLabel(ScrollSpacer, "<H/J/K/L>: Scroll", ColorSchemes.Standard);
-        UnpickSpacer = AddSpacer(ScrollText);
+        ScrollText = AddLabel(null, 
+            "<Tab/S-Tab> Panels |  Navigate | <H/J/K/L>: Scroll", 
+            ColorSchemes.Standard
+        );
+        PickSpacer = AddSpacer(ScrollText);
+        PickText = AddLabel(PickSpacer, "[P]ick", ColorSchemes.Good);
+        UnpickSpacer = AddSpacer(PickText);
         UnpickText = AddLabel(UnpickSpacer, "[U]npick", ColorSchemes.Bad);
-
         ReloadSpacer = AddSpacer(UnpickText);
+
         ReloadText = AddLabel(ReloadSpacer, "Rel[O]ad", ColorSchemes.Interest);
         RunSpacer = AddSpacer(ReloadText);
         RunText = AddLabel(RunSpacer, "[R]un", ColorSchemes.Good);
