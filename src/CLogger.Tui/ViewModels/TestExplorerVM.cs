@@ -59,8 +59,6 @@ public class TestExplorerVM(
 
             ReloadTestHeirarchy(parent!);
         }
-
-        Console.WriteLine("WatchDiscoveredTests Unbound!");
     }
 
     private async Task WatchUpdatedTests(CancellationToken cancellationToken)
@@ -71,7 +69,6 @@ public class TestExplorerVM(
             var targetId = "/" + string.Join('/', path);
             ReloadTestHeirarchy(_targetMappings[targetId]);
         }
-        Console.WriteLine("WatchUpdatedTests Unbound!");
     }
 
     // Reloads a target test (and all of its parent nodes)
@@ -98,19 +95,14 @@ public class TestExplorerVM(
             node.TestState = TestState.None;
             foreach(var child in node.Infos)
             {
-                if (child.TestState == TestState.Running)
+                if (child.TestState != TestState.None)
                 {
-                    node.TestState = TestState.Running;
-                    break;
-                }
-                if (child.TestState == TestState.Failed)
-                {
-                    node.TestState = TestState.Failed;
-                    break;
-                }
-                if (child.TestState == TestState.Passed)
-                {
-                    node.TestState = TestState.Passed;
+                    node.TestState = child.TestState;
+                    // Only gets set to passed if every child passed
+                    if (child.TestState != TestState.Passed)
+                    {
+                        break;
+                    }
                 }
             }
         }

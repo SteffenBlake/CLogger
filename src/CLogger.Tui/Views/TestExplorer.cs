@@ -1,4 +1,3 @@
-using CLogger.Common.Model;
 using CLogger.Tui.Models;
 using Terminal.Gui;
 
@@ -68,6 +67,31 @@ public class TestExplorer : FrameView
             _scrollBar.OtherScrollBarView.Position = TreeView.ScrollOffsetHorizontal;
             _scrollBar.Refresh();
         };
+
+        TreeView.KeyPress += (e) =>
+        {
+            if (e.KeyEvent.Key == Keybinds.ScrollLeft.Key)
+            {
+                _scrollBar.OtherScrollBarView.Position--;
+            }
+            if (e.KeyEvent.Key == Keybinds.ScrollDown.Key)
+            {
+                _scrollBar.Position++;
+            }
+            if (e.KeyEvent.Key == Keybinds.ScrollUp.Key)
+            {
+                _scrollBar.Position--;
+            }
+            if (e.KeyEvent.Key == Keybinds.ScrollRight.Key)
+            {
+                _scrollBar.OtherScrollBarView.Position++;
+            }
+        };
+
+        _scrollBar.AddKeyBinding(Key.h, Command.ScrollLeft);
+        _scrollBar.AddKeyBinding(Key.j, Command.ScrollDown);
+        _scrollBar.AddKeyBinding(Key.k, Command.ScrollUp);
+        _scrollBar.AddKeyBinding(Key.l, Command.ScrollRight);
     }
 
     public bool OnPick() => OnSetPicked(true);

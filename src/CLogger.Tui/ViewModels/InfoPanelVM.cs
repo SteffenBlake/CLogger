@@ -3,7 +3,6 @@ using CLogger.Common.Model;
 using CLogger.Tui.Models;
 using CLogger.Tui.Views;
 using Terminal.Gui;
-using Terminal.Gui.Trees;
 
 namespace CLogger.Tui.ViewModels;
 

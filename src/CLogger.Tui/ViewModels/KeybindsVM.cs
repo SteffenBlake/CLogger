@@ -18,6 +18,7 @@ public class KeybindsVM : IViewModel
         TestExplorer = testExplorer;
         _keybinds =  new()
         {
+            { Keybinds.Quit, Quit },
             { Keybinds.ExplorerPick, TestExplorer.OnPick },
             { Keybinds.ExplorerUnpick, TestExplorer.OnUnpick },
             { Keybinds.Reload, ActionBar.Reload },
@@ -42,5 +43,11 @@ public class KeybindsVM : IViewModel
             return keybind();
         }
         return false;
+    }
+
+    private bool Quit()
+    {
+        Application.RequestStop();
+        return true;
     }
 }

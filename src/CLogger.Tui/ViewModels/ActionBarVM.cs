@@ -19,8 +19,8 @@ public class ActionBarVM(
     public async Task BindAsync(CancellationToken cancellationToken)
     {
         ActionBar.ReloadBtn.Clicked += () => OnReload(cancellationToken);
-        ActionBar.RunBtn.Clicked += () => OnRun(debug:false, cancellationToken);
-        ActionBar.DebugBtn.Clicked += () => OnRun(debug:true, cancellationToken);
+        ActionBar.RunBtn.Clicked += () => OnRun(cancellationToken);
+        ActionBar.DebugBtn.Clicked += () => OnDebug(cancellationToken);
         ActionBar.CancelBtn.Clicked += () => OnCancel(cancellationToken);
 
         await WatchForBusy(cancellationToken);
@@ -28,6 +28,11 @@ public class ActionBarVM(
 
     private void OnReload(CancellationToken cancellationToken)
     {
+        if (!ActionBar.ReloadBtn.Enabled)
+        {
+            return;
+        }
+
         Application.MainLoop.Invoke(() => {
             ModelState.ClearTestsAsync(cancellationToken).Wait(cancellationToken);
             var discover = new RunTestsArgs(
@@ -39,8 +44,31 @@ public class ActionBarVM(
         });
     }
 
-    private void OnRun(bool debug, CancellationToken cancellationToken)
+    private void OnRun(CancellationToken cancellationToken)
     {
+        if (!ActionBar.RunBtn.Enabled)
+        {
+            return;
+        }
+        OnStart(debug:false, cancellationToken);
+    }
+
+    private void OnDebug(CancellationToken cancellationToken)
+    {
+        if (!ActionBar.RunBtn.Enabled)
+        {
+            return;
+        }
+        OnStart(debug:true, cancellationToken);
+    }
+
+    private void OnStart(bool debug, CancellationToken cancellationToken)
+    {
+        if (!ActionBar.ReloadBtn.Enabled)
+        {
+            return;
+        }
+
         var testIds = TestExplorer.TreeView.Objects
             .Cast<TestTreeInfo>()
             .SelectMany(i => i.GetPicked())
@@ -58,6 +86,11 @@ public class ActionBarVM(
 
     private void OnCancel(CancellationToken cancellationToken)
     {
+        if (!ActionBar.CancelBtn.Enabled)
+        {
+            return;
+        }
+
         ModelState.MetaInfo.State
             .WriteAsync(AppState.Cancelling, cancellationToken)
             .Wait(cancellationToken);
@@ -71,7 +104,8 @@ public class ActionBarVM(
             ActionBar.ReloadBtn.Enabled = state == AppState.Idle;
             ActionBar.RunBtn.Enabled = state == AppState.Idle;
             ActionBar.DebugBtn.Enabled = state == AppState.Idle;
-            ActionBar.CancelBtn.Enabled = state == AppState.Busy;
+            ActionBar.CancelBtn.Enabled = 
+                state == AppState.Running || state == AppState.Debugging;
             ActionBar.CancelBtn.Visible = state != AppState.Idle;
         }
     }

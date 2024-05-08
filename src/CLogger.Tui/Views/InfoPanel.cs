@@ -1,6 +1,7 @@
 using System.Text;
 using CLogger.Common.Model;
 using CLogger.Tui.Extensions;
+using CommandLine;
 using Terminal.Gui;
 
 namespace CLogger.Tui.Views;
@@ -26,6 +27,7 @@ public class InfoPanel : FrameView
         Y = Pos.Bottom(actionBar);
         Width = Dim.Fill();
         Height = Dim.Fill(margin:1);
+        CanFocus = true;
 
         Add(DisplayNameFrame = new()
         {
@@ -96,10 +98,15 @@ public class InfoPanel : FrameView
             ColorScheme = ColorSchemes.BadNoFocus,
             WordWrap = true,
             Enabled = true,
-            ReadOnly = true
+            ReadOnly = true,
+            CanFocus = true
         });
-
+        
         ErrorScrollView.DrawContent += (_) => RedrawError();
+
+        ErrorText.KeyPress += OnKeyPress;
+        ErrorText.UnwrappedCursorPosition += (_) => AnchorScroll();
+
         RedrawError();
     }
 
@@ -115,7 +122,7 @@ public class InfoPanel : FrameView
         ErrorScrollView.ContentSize = new(width, height);
     }
 
-    internal void LoadTestInfo(TestInfo data)
+    public void LoadTestInfo(TestInfo data)
     {
         if (string.IsNullOrEmpty(data.DisplayName))
         {
@@ -182,6 +189,67 @@ public class InfoPanel : FrameView
             }
             ErrorText.Text = message.ToString();
             ErrorScrollView.SetNeedsDisplay();
+        }
+    }
+
+    private void OnKeyPress(KeyEventEventArgs args)
+    {
+        if (args.KeyEvent.Key == Keybinds.ScrollUp.Key)
+        {
+            ErrorScrollView.ScrollUp(1);
+            AnchorCursor();
+        }
+        else if (args.KeyEvent.Key == Keybinds.ScrollDown.Key)
+        {
+            ErrorScrollView.ScrollDown(1);
+            AnchorCursor();
+        }
+    }
+
+    private void AnchorCursor()
+    {
+
+        var offset = ErrorScrollView.ContentOffset.Y;
+        var position = ErrorText.CursorPosition.Y;
+        var trueOffset = offset + position;
+
+        _ = ErrorScrollView.GetCurrentHeight(out var height);
+        height--;
+        
+        if (trueOffset > height)
+        {
+            ErrorText.CursorPosition = new(
+                ErrorText.CursorPosition.X,
+                ErrorText.CursorPosition.Y-trueOffset+height
+            );
+        }
+
+        if (trueOffset < 0)
+        {
+            ErrorText.CursorPosition = new(
+                ErrorText.CursorPosition.X,
+                ErrorText.CursorPosition.Y-trueOffset
+            );
+        }
+    }
+
+    private void AnchorScroll()
+    {
+        var offset = ErrorScrollView.ContentOffset.Y;
+        var position = ErrorText.CursorPosition.Y;
+        var trueOffset = offset + position;
+
+        _ = ErrorScrollView.GetCurrentHeight(out var height);
+        height--;
+
+        if (trueOffset > height)
+        {
+            ErrorScrollView.ScrollDown(trueOffset-height);
+        }
+
+        if (trueOffset < 0)
+        {
+            ErrorScrollView.ScrollUp(-trueOffset);
         }
     }
 }

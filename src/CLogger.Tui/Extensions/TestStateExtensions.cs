@@ -11,6 +11,7 @@ public static class TestStateExtensions
             TestState.None => "",
             TestState.Passed => "",
             TestState.Running => "",
+            TestState.Debugging => "",
             TestState.Failed => "",
             _ => "",
        };

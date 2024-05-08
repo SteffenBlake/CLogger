@@ -24,8 +24,6 @@ public static class Startup
             Application.Driver.UnChecked = new Rune('');
             Application.Driver.Checked = new Rune('');
 
-            Application.QuitKey = Key.q;
-
             Application.IsMouseDisabled = true;
             Application.Driver.StopReportingMouseMoves();
             

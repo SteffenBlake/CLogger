@@ -56,7 +56,8 @@ public class TestRunnerVM(
         }
 
         Logger.LogInformation("Setting app state to busy.");
-        await ModelState.MetaInfo.State.WriteAsync(AppState.Busy, cancellationToken);
+        var runState = eventArgs.Debug ? AppState.Debugging : AppState.Running;
+        await ModelState.MetaInfo.State.WriteAsync(runState, cancellationToken);
 
         var pipeName = Guid.NewGuid().ToString();
 
@@ -76,19 +77,12 @@ public class TestRunnerVM(
                 eventArgs, dotnetTestProcess, combinedCancelled
             );
 
-            var runTask = RunDotnetTestAsync(dotnetTestProcess, combinedCancelled);
+            var runTask = RunDotnetTestAsync(
+                dotnetTestProcess, eventArgs, pipeName, combinedCancelled
+            );
             
-            var adapterTask = ListenToAdapterAsync(pipeName, combinedCancelled);
-
-            var stdOutTask = HandleStdOutAsync(
-                eventArgs, dotnetTestProcess, combinedCancelled
-            );
-            var errOutTask = HandleStdErrorAsync(
-                dotnetTestProcess, combinedCancelled
-            );
-
             Logger.LogInformation("Waiting for any test runner task to complete.");
-            var firstDone = await Task.WhenAny(cancelTask, runTask, adapterTask);
+            var firstDone = await Task.WhenAny(cancelTask, runTask);
            
             if (firstDone == cancelTask)
             {
@@ -102,10 +96,7 @@ public class TestRunnerVM(
             await ModelState.MetaInfo.State.WriteAsync(AppState.Finishing, cancellationToken);
 
             Logger.LogInformation("Waiting for all proc tasks to complete now.");
-            await Task.WhenAll(cancelTask, runTask, adapterTask);
-            Logger.LogInformation("Proc tasks complete, cancelling read tasks");
-            innerCancelled.Cancel();
-            await Task.WhenAll(stdOutTask, errOutTask);
+            await Task.WhenAll(cancelTask, runTask);
         }
         catch (OperationCanceledException){}
 
@@ -173,6 +164,8 @@ public class TestRunnerVM(
 
     private async Task RunDotnetTestAsync(
         Process process,
+        RunTestsArgs eventArgs,
+        string pipeName,
         CancellationToken cancellationToken
     )
     {
@@ -186,7 +179,19 @@ public class TestRunnerVM(
         process.Start();
 
         Logger.LogInformation("Waiting for dotnet test to finish...");
-        await process.WaitForExitAsync(cancellationToken);
+        var procTask = process.WaitForExitAsync(cancellationToken);
+
+        var adapterTask = ListenToAdapterAsync(pipeName, cancellationToken);
+
+        var stdOutTask = HandleStdOutAsync(
+            eventArgs, process, cancellationToken
+        );
+        var errOutTask = HandleStdErrorAsync(
+            process, cancellationToken
+        );
+
+        await Task.WhenAll(procTask, adapterTask, stdOutTask, errOutTask);
+
         Logger.LogInformation("dotnet test finished!");
     }
 
