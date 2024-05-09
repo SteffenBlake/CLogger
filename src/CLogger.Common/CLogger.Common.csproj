@@ -16,8 +16,8 @@
     <PackageReference Include="Microsoft.TestPlatform.ObjectModel" Version="17.9.0" />
   </ItemGroup>
     
-  <PropertyGroup>
+  <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\"/>
-  </PropertyGroup>
+  </ItemGroup>
 
 </Project>
