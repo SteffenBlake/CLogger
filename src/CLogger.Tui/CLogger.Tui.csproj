@@ -1,7 +1,19 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <StartWorkingDirectory>bin/Debug/net8.0/</StartWorkingDirectory>
     <ProjectReference Include="..\CLogger.Common\CLogger.Common.csproj" />
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/SteffenBlake/CLogger</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <Copyright>Copyright (c) Steffen Cole Blake 2024</Copyright>
+    <LicenseUrl>https://raw.githubusercontent.com/SteffenBlake/CLogger/main/LICENSE</LicenseUrl>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>clogger</ToolCommandName>
   </ItemGroup>
 
   <ItemGroup>
@@ -15,11 +27,7 @@
   </ItemGroup>
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <StartWorkingDirectory>bin/Debug/net8.0/</StartWorkingDirectory>
+    <None Include="README.md" Pack="true" PackagePath="\"/>
   </PropertyGroup>
 
 </Project>

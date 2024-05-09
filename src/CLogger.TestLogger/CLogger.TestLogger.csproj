@@ -1,7 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>clogger.testlogger</AssemblyName>
     <ProjectReference Include="..\CLogger.Common\CLogger.Common.csproj" />
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/SteffenBlake/CLogger</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <Copyright>Copyright (c) Steffen Cole Blake 2024</Copyright>
+    <LicenseUrl>https://raw.githubusercontent.com/SteffenBlake/CLogger/main/LICENSE</LicenseUrl>
   </ItemGroup>
 
   <ItemGroup>
@@ -10,10 +19,6 @@
   </ItemGroup>
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <AssemblyName>clogger.testlogger</AssemblyName>
+    <None Include="README.md" Pack="true" PackagePath="\"/>
   </PropertyGroup>
-
 </Project>
