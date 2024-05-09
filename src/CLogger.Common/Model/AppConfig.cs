@@ -2,14 +2,9 @@ using CLogger.Common.Channels;
 
 namespace CLogger.Common.Model;
 
-public class AppConfig
+public class AppConfig(
+    ChannelValueBroadcaster<string> path
+)
 {
-    public ChannelBroadcaster<string> Path { get; }
-
-    public AppConfig(
-        ChannelBroadcaster<string> path
-    )
-    {
-        Path = path;
-    }
+    public ChannelValueBroadcaster<string> Path { get; } = path;
 }

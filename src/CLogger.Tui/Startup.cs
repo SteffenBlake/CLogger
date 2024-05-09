@@ -49,6 +49,7 @@ public static class Startup
             // Services
             builder.Services.AddSingleton<ChannelBroadcasterContainer>();
             builder.Services.AddTransient(typeof(ChannelBroadcaster<>));
+            builder.Services.AddTransient(typeof(ChannelValueBroadcaster<>));
 
             // Views
             builder.Services.AddSingleton<MainWindow>();

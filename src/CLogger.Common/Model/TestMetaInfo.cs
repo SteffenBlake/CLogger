@@ -4,14 +4,14 @@ using CLogger.Common.Enums;
 namespace CLogger.Common.Model;
 
 public class TestMetaInfo(
-    ChannelBroadcaster<AppState> state,
-    ChannelBroadcaster<TimeSpan> elapsed,
-    ChannelBroadcaster<string> testProcessId
+    ChannelValueBroadcaster<AppState> state,
+    ChannelValueBroadcaster<TimeSpan> elapsed,
+    ChannelValueBroadcaster<string> testProcessId
 )
 {
-    public ChannelBroadcaster<AppState> State { get; } = state; 
+    public ChannelValueBroadcaster<AppState> State { get; } = state; 
 
-    public ChannelBroadcaster<TimeSpan> Elapsed { get; } = elapsed;
+    public ChannelValueBroadcaster<TimeSpan> Elapsed { get; } = elapsed;
 
-    public ChannelBroadcaster<string> TestProcessId { get; } = testProcessId;
+    public ChannelValueBroadcaster<string> TestProcessId { get; } = testProcessId;
 }

@@ -2,11 +2,6 @@ using System.Threading.Channels;
 
 namespace CLogger.Common.Channels;
 
-public interface IChannelBroadcaster
-{
-    bool TryComplete();
-}
-
 public class ChannelBroadcaster<T> : IChannelBroadcaster
 {
     public T Value { get; private set; } = default!;
@@ -18,14 +13,8 @@ public class ChannelBroadcaster<T> : IChannelBroadcaster
 
     private readonly Dictionary<Guid, ChannelWriter<T>> _writers = [];
 
-    public async Task WriteAsync(T data, CancellationToken cancellationToken)
+    public virtual async Task WriteAsync(T data, CancellationToken cancellationToken)
     {
-        // Don't bother publishing the event if the value didn't change
-        if (Equals(Value, data))
-        {
-            return;
-        }
-
         Value = data;
 
         var writeTasks = _writers.Values.Select(w => 
