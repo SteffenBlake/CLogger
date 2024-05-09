@@ -2,6 +2,7 @@ using CLogger.Common.Enums;
 using CLogger.Common.Model;
 using CLogger.Tui.Models;
 using CLogger.Tui.Views;
+using Terminal.Gui;
 
 namespace CLogger.Tui.ViewModels;
 
@@ -19,7 +20,8 @@ public class TestExplorerVM(
         await Task.WhenAll(
             WatchDiscoveredTests(cancellationToken),
             WatchUpdatedTests(cancellationToken),
-            WatchClearTests(cancellationToken)
+            WatchClearTests(cancellationToken),
+            WatchAppState(cancellationToken)
         );
     }
 
@@ -46,7 +48,9 @@ public class TestExplorerVM(
                     );
                     if (parent == null)
                     {
-                        TestExplorer.TreeView.AddObject(next);
+                        Application.MainLoop.Invoke(() => 
+                            TestExplorer.TreeView.AddObject(next)
+                        );
                     }
                     else
                     {
@@ -81,7 +85,12 @@ public class TestExplorerVM(
             target = target.Parent;
             LoadTestState(target);
         }
-        TestExplorer.TreeView.RefreshObject(target);
+
+        Application.MainLoop.Invoke(() =>
+        {
+            TestExplorer.TreeView.RebuildTree();
+            TestExplorer.TreeView.ExpandAll();
+        });
     }
 
     private void LoadTestState(TestTreeInfo node)
@@ -116,8 +125,23 @@ public class TestExplorerVM(
         var events = ModelState.OnClearTests.Subscribe(cancellationToken);
         await foreach(var _ in events)
         {
-            TestExplorer.TreeView.ClearObjects();
             _targetMappings.Clear();
+            Application.MainLoop.Invoke(TestExplorer.TreeView.ClearObjects);
+        }
+    }
+
+    private async Task WatchAppState(CancellationToken cancellationToken)
+    {
+        var events = ModelState.MetaInfo.State.Subscribe(cancellationToken);
+        await foreach (var state in events)
+        {
+            if (state != AppState.Idle)
+            {
+                continue;
+            }
+            Application.MainLoop.Invoke(() => {
+                TestExplorer.TreeView.RebuildTree();
+            });
         }
     }
 }

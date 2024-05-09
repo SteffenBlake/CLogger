@@ -101,12 +101,14 @@ public class ActionBarVM(
         var events = ModelState.MetaInfo.State.Subscribe(cancellationToken);
         await foreach(var state in events)
         {
-            ActionBar.ReloadBtn.Enabled = state == AppState.Idle;
-            ActionBar.RunBtn.Enabled = state == AppState.Idle;
-            ActionBar.DebugBtn.Enabled = state == AppState.Idle;
-            ActionBar.CancelBtn.Enabled = 
-                state == AppState.Running || state == AppState.Debugging;
-            ActionBar.CancelBtn.Visible = state != AppState.Idle;
+            Application.MainLoop.Invoke(() => {
+                ActionBar.ReloadBtn.Enabled = state == AppState.Idle;
+                ActionBar.RunBtn.Enabled = state == AppState.Idle;
+                ActionBar.DebugBtn.Enabled = state == AppState.Idle;
+                ActionBar.CancelBtn.Enabled = 
+                    state == AppState.Running || state == AppState.Debugging;
+                ActionBar.CancelBtn.Visible = state != AppState.Idle;
+            });
         }
     }
 }

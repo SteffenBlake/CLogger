@@ -2,6 +2,7 @@ using CLogger.Common.Enums;
 using CLogger.Common.Model;
 using CLogger.Tui.Views;
 using Microsoft.Extensions.Logging;
+using Terminal.Gui;
 
 namespace CLogger.Tui.ViewModels;
 
@@ -27,12 +28,13 @@ public class ProcessIdDialogVM(
     private async Task WatchProcessIdAsync(CancellationToken cancellationToken)
     {
         var events = ModelState.MetaInfo.TestProcessId.Subscribe(cancellationToken);
-        Logger.LogInformation("Listening for Process Id Events...");
+        Logger.LogTrace("Listening for Process Id Events...");
         await foreach(var processId in events)
         {
-            Logger.LogInformation("Process Id Recieved");
-            ProcessIdDialog.ProcessIdText.Text = processId;
-            ProcessIdDialog.Visible = true;
+            Application.MainLoop.Invoke(() => {
+                ProcessIdDialog.ProcessIdText.Text = processId;
+                ProcessIdDialog.Visible = true;
+            });
         }
     }
 
@@ -52,7 +54,9 @@ public class ProcessIdDialogVM(
                 continue;
             }
 
-            ProcessIdDialog.Visible = false;
+            Application.MainLoop.Invoke(() => {
+                ProcessIdDialog.Visible = false;
+            });
         }
     }
 
@@ -72,7 +76,9 @@ public class ProcessIdDialogVM(
                 continue;
             }
 
-            ProcessIdDialog.Visible = false;
+            Application.MainLoop.Invoke(() => {
+                ProcessIdDialog.Visible = false;
+            });
         }
     }
 }

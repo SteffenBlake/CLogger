@@ -70,7 +70,14 @@ public class InfoPanelVM(
             ),
             Duration = infos
                 .Select(i => i.Duration)
-                .Aggregate((TimeSpan?)null, (a,b) => a+b),
+                .Aggregate(
+                    (TimeSpan?)null, 
+                    (a,b) => 
+                        a == null && b == null ? null :
+                        a == null ? b :
+                        b == null ? a :
+                        a+b
+                ),
             StartTime = null,
             EndTime = null,
             ErrorStackTrace = null,
