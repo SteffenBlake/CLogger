@@ -1,4 +1,5 @@
-﻿using System.IO.Pipes;
+﻿using System.Net;
+using System.Net.Sockets;
 using System.Text.Json;
 using CLogger.Common.Messages;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel;
@@ -17,7 +18,8 @@ public class CLoggerTestLogger : ITestLoggerWithParameters
     public void Initialize(TestLoggerEvents _, string __) =>
         throw new NotImplementedException();
 
-    private NamedPipeClientStream? _client;
+    private TcpClient? _client;
+    private NetworkStream? _stream;
     private StreamWriter? _writer;
 
     public void Initialize(
@@ -25,21 +27,28 @@ public class CLoggerTestLogger : ITestLoggerWithParameters
     )
     {
         if (
-            !parameters.TryGetValue("pipe", out var pipe) || 
-            string.IsNullOrEmpty(pipe)
+            !parameters.TryGetValue("domain", out var domainRaw) || 
+            string.IsNullOrEmpty(domainRaw) || 
+            !IPAddress.TryParse(domainRaw, out var domain)
         )
         {
-            throw new ArgumentException("'pipe' parameter is required");
+            throw new ArgumentException("'domain' parameter is required");
         }
 
-        _client = new NamedPipeClientStream(
-            ".",
-            pipe,
-            PipeDirection.InOut
-        );
+        if (
+            !parameters.TryGetValue("port", out var portRaw) || 
+            string.IsNullOrEmpty(portRaw) || 
+            !int.TryParse(portRaw, out var port)
+        )
+        {
+            throw new ArgumentException("'port' parameter is required");
+        }
 
-        _client.Connect();
-        _writer = new StreamWriter(_client)
+        _client = new TcpClient();
+        _client.Connect(domain, port);
+        _stream = _client.GetStream();
+
+        _writer = new StreamWriter(_stream)
         {
             AutoFlush = true
         };
@@ -53,6 +62,7 @@ public class CLoggerTestLogger : ITestLoggerWithParameters
     {
         WriteData(TestRunCompleteMessage.FromArgs(e));
         _writer!.Dispose();
+        _stream!.Dispose();
         _client!.Dispose();
     }
 

@@ -11,6 +11,7 @@ using NLog.Config;
 using NLog.Targets;
 using System.Reflection;
 using Microsoft.Extensions.Logging;
+using src.CLogger.Tui.ViewModels;
 
 namespace CLogger.Tui;
 
@@ -43,7 +44,6 @@ public static class Startup
 
             // Model
             builder.Services.AddSingleton<ModelState>();
-            builder.Services.AddSingleton<AppConfig>();
             builder.Services.AddSingleton<TestMetaInfo>();
             
             // Services
@@ -62,6 +62,7 @@ public static class Startup
             // ViewModels
             builder.Services.AddSingleton<ViewModelBinder>();
             builder.Services.AddSingleton<IViewModel, TestRunnerVM>(); 
+            builder.Services.AddSingleton<IViewModel, TestListenerVM>(); 
             builder.Services.AddSingleton<IViewModel, MainWindowVM>(); 
             builder.Services.AddSingleton<IViewModel, ActionBarVM>(); 
             builder.Services.AddSingleton<IViewModel, TestExplorerVM>(); 
@@ -71,9 +72,6 @@ public static class Startup
             builder.Services.AddSingleton<IViewModel, ProcessIdDialogVM>(); 
             
             var app = builder.Build();
-
-            var appConfig = app.Services.GetRequiredService<AppConfig>();
-            await options.ApplyAsync(appConfig, cancelled.Token);
 
             var binder = app.Services.GetRequiredService<ViewModelBinder>();
             var binderTask = binder.BindAsync(cancelled.Token);

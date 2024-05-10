@@ -15,12 +15,13 @@ public class TestRunCompleteMessage : MessageBase
         };
     }
 
-    public override async Task InvokeAsync(
+    public override async Task<bool> InvokeAsync(
         ModelState modelState, CancellationToken cancellationToken
     )
     {
         await modelState.MetaInfo.Elapsed.WriteAsync(
             ElapsedTimeInRunningTests, cancellationToken
         );
+        return true;
     }
 }

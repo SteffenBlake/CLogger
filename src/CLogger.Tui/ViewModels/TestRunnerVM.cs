@@ -1,8 +1,6 @@
 using System.Diagnostics;
-using System.IO.Pipes;
-using System.Text.Json;
+using System.Net;
 using CLogger.Common.Enums;
-using CLogger.Common.Messages;
 using CLogger.Common.Model;
 using CLogger.Tui.Models;
 using Microsoft.Extensions.Logging;
@@ -30,6 +28,16 @@ public class TestRunnerVM(
 
     public async Task BindAsync(CancellationToken cancellationToken)
     {
+        Logger.LogInformation("Waiting for startup to finish...");
+
+        // Wait for startup to be done
+        while (ModelState.MetaInfo.State.Value == AppState.Starting)
+        {
+            await Task.Delay(500, cancellationToken);
+        }
+
+        Logger.LogInformation("Startup done, commencing first run...");
+
         var startupArgs = new RunTestsArgs(
             Discover: !CliOptions.Run,
             Debug: CliOptions.Debug,
@@ -59,12 +67,13 @@ public class TestRunnerVM(
         var runState = eventArgs.Debug ? AppState.Debugging : AppState.Running;
         await ModelState.MetaInfo.State.WriteAsync(runState, cancellationToken);
 
-        var pipeName = Guid.NewGuid().ToString();
-
         Logger.LogInformation(
-            "Loading dotnet test process with pipename: {pipeName}", pipeName
+            "Loading dotnet test process with port: {ip}:{port}", 
+            CliOptions.Domain,
+            ModelState.MetaInfo.Port.Value
         );
-        var dotnetTestProcess = SetupDotnetTest(pipeName, eventArgs);
+
+        var dotnetTestProcess = SetupDotnetTest(eventArgs);
 
         var innerCancelled = new CancellationTokenSource();
         var combinedCancelled = CancellationTokenSource.CreateLinkedTokenSource(
@@ -78,7 +87,7 @@ public class TestRunnerVM(
             );
 
             var runTask = RunDotnetTestAsync(
-                dotnetTestProcess, eventArgs, pipeName, combinedCancelled
+                dotnetTestProcess, eventArgs, combinedCancelled
             );
             
             Logger.LogInformation("Waiting for any test runner task to complete.");
@@ -104,7 +113,7 @@ public class TestRunnerVM(
         await ModelState.MetaInfo.State.WriteAsync(AppState.Idle, cancellationToken);
     }
 
-    private Process SetupDotnetTest(string pipeName, RunTestsArgs eventArgs)
+    private Process SetupDotnetTest(RunTestsArgs eventArgs)
     {
         var process = new Process();
         process.StartInfo.FileName = "dotnet";
@@ -115,7 +124,8 @@ public class TestRunnerVM(
         
         List<string> dotnetTestArgs = [
             "test",
-            "--logger", $"clogger;pipe={pipeName}",
+            "--logger", 
+            $"clogger;domain={CliOptions.Domain};port={ModelState.MetaInfo.Port.Value}",
         ];
 
         if (eventArgs.Discover)
@@ -146,9 +156,9 @@ public class TestRunnerVM(
             dotnetTestArgs.Add(quoteWrapped);
         }
 
-        if (ModelState.Config.Path.Value != ".")
+        if (CliOptions.Path != ".")
         {
-            dotnetTestArgs.Add(Path.GetFullPath(ModelState.Config.Path.Value));
+            dotnetTestArgs.Add(Path.GetFullPath(CliOptions.Path));
         }
         
         process.StartInfo.Arguments = string.Join(" ", dotnetTestArgs);
@@ -165,7 +175,6 @@ public class TestRunnerVM(
     private async Task RunDotnetTestAsync(
         Process process,
         RunTestsArgs eventArgs,
-        string pipeName,
         CancellationToken cancellationToken
     )
     {
@@ -181,8 +190,6 @@ public class TestRunnerVM(
         Logger.LogInformation("Waiting for dotnet test to finish...");
         var procTask = process.WaitForExitAsync(cancellationToken);
 
-        var adapterTask = ListenToAdapterAsync(pipeName, cancellationToken);
-
         var stdOutTask = HandleStdOutAsync(
             eventArgs, process, cancellationToken
         );
@@ -190,7 +197,7 @@ public class TestRunnerVM(
             process, cancellationToken
         );
 
-        await Task.WhenAll(procTask, adapterTask, stdOutTask, errOutTask);
+        await Task.WhenAll(procTask, stdOutTask, errOutTask);
 
         Logger.LogInformation("dotnet test finished!");
     }
@@ -295,50 +302,5 @@ public class TestRunnerVM(
             DotnetLogger.LogError(next!);
         }
         Logger.LogInformation("Standard Error task completed successfully!");
-    }
-
-    private async Task ListenToAdapterAsync(
-        string pipeName,
-        CancellationToken cancellationToken
-    )
-    {
-        Logger.LogInformation("Listening on Pipe Server for TestAdapter output...");
-        using var pipeServer = new NamedPipeServerStream(
-            pipeName: pipeName,
-            PipeDirection.InOut
-        );
-       
-        var timeoutTask = Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
-
-        Logger.LogInformation("Waiting for Pipe Server client...");
-        var actual = await Task.WhenAny(
-            timeoutTask,
-            pipeServer.WaitForConnectionAsync(cancellationToken)
-        );
-        if (actual == timeoutTask)
-        {
-            Logger.LogInformation("Pipe Server client failed to connect, returning");
-            return;
-        }
-
-        using var reader = new StreamReader(pipeServer);
-   
-        Logger.LogInformation("Pipe Server client connected, listening for data!");
-        while (
-            !cancellationToken.IsCancellationRequested
-        )
-        {
-            var next = await reader.ReadLineAsync(cancellationToken);
-            if (next == null)
-            {
-                break;
-            }
-
-            var msg = JsonSerializer.Deserialize<MessageBase>(next)
-                ?? throw new InvalidOperationException();
-
-            await msg.InvokeAsync(ModelState, cancellationToken);
-        }
-        Logger.LogInformation("Pipe Server Task completed successfully.");
     }
 }

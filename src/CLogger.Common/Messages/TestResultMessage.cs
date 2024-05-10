@@ -34,12 +34,13 @@ public class TestResultMessage : MessageBase
         FullyQualifiedName = result.TestCase.FullyQualifiedName
     };
 
-    public override async Task InvokeAsync(
+    public override async Task<bool> InvokeAsync(
         ModelState modelState, CancellationToken cancellationToken
     )
     {
         var info = ToInfo();
         await modelState.TestResultAsync(info, cancellationToken); 
+        return false;
     }
 
     private TestInfo ToInfo()

@@ -23,6 +23,25 @@ public class CliOptions
     )]
     public bool Debug { get; init; } = false;
 
+
+    [Option(
+        shortName: 'p',
+        longName: "port",
+        Default = 0, 
+        HelpText = "Specifies the TCP port the TestListener and TestAdapters communicate on",
+        Required = false
+    )]
+    public int Port { get; init; } = 0;
+
+    [Option(
+        shortName: 'i',
+        longName: "ip",
+        Default = "127.0.0.1", 
+        HelpText = "Specifies the  the IP TestListener and TestAdapters communicate on",
+        Required = false
+    )]
+    public string Domain { get; set; } = "127.0.0.1";
+
     [Value(
         index: 0,
         MetaName = "Path",
@@ -31,11 +50,4 @@ public class CliOptions
         Required = false
     )]
     public string Path { get; init; } = ".";
-
-    public async Task ApplyAsync(
-        AppConfig config, CancellationToken cancellationToken
-    )
-    {
-        await config.Path.WriteAsync(Path, cancellationToken);
-    }
 }

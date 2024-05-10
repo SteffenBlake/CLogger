@@ -5,7 +5,6 @@ namespace CLogger.Common.Model;
 
 public class ModelState(
     TestMetaInfo testMetaInfo,
-    AppConfig config,
     ChannelBroadcaster<string> onNewTest,
     ChannelBroadcaster<string> onUpdatedTest,
     ChannelBroadcaster<bool> onClearTests,
@@ -13,8 +12,6 @@ public class ModelState(
 ) 
 {
     public TestMetaInfo MetaInfo { get; } = testMetaInfo;
-
-    public AppConfig Config { get; } = config;
 
     private readonly Dictionary<string, TestInfo> _testInfos = [];
     public IReadOnlyDictionary<string, TestInfo> TestInfos => _testInfos;
